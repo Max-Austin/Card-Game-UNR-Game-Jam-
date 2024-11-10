@@ -16,6 +16,9 @@ Tornado - Triple your sky monsters power
 Overload - Triple your voltage monsters power
 Psycho Shift - Triple your neuron monsters power
 
+KNOWN BUGS:
+When you place a card in the prep zone, move it back to hand, then back to pre zone, it cannot be selected to be put in battle zone
+
 */
 
 import processing.sound.*;
@@ -23,9 +26,12 @@ import processing.sound.*;
 SoundFile musicLoop;
 SoundFile drawCard;
 SoundFile moveCard;
+SoundFile battleWon;
+SoundFile battleLost;
 
 PImage background;
 PImage blankCard;
+PImage typeChart;
 PImage[] skyFrames = new PImage[4];
 PImage[] volcFrames = new PImage[4];
 PImage[] oceFrames = new PImage[4];
@@ -83,6 +89,7 @@ boolean playerWonBattle = false;
 boolean compWonBattle = false;
 boolean menu = true;
 boolean rules = false;
+boolean drawTypeChart = false;
 
 int phaseIndicatorFrameCount = 0; //counter needs reset
 int playerCardsInPrepZone = 0; //counter needs reset
@@ -118,18 +125,18 @@ void setup(){
   playerDeckY = height-handPadY;
   //background = loadImage("assets/background.jpg");
   blankCard = loadImage("assets/blankcard.png");
+  typeChart = loadImage("assets/type-chart.PNG");
   
   musicLoop = new SoundFile(this, "assets/music-loop.mp3");
   drawCard = new SoundFile(this, "assets/draw.wav");
-  drawCard.amp(0.3);
   moveCard = new SoundFile(this, "assets/move-card.wav");
-  moveCard.amp(0.3);
+  battleWon = new SoundFile(this, "assets/battle-won.wav");
+  battleLost = new SoundFile(this, "assets/battle-lost.wav");
   
   imageMode(CENTER);
   rectMode(CENTER);
   
   initializeFrames();
-  
   initializeDecks();
   
   playerHandPos[0] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(4*cardWidth+4*handPadX), height-handPadY);
@@ -175,7 +182,7 @@ void setup(){
   returnToMenuFromGame = new Button(width - 150, 50, menuButtonWidth/3, menuButtonHeight/2, "Main Menu");
   menuButtons[0] = new Button(width/2, (height/2) - (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "Start Game");
   menuButtons[1] = new Button(width/2, (height/2), menuButtonWidth, menuButtonHeight, "Rules");
-  menuButtons[2] = new Button(width/2, (height/2) + (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "High Scores");
+  menuButtons[2] = new Button(width/2, (height/2) + (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "High Scores (Under Construction)");
 }
 
 void menu(){
@@ -250,9 +257,10 @@ void rules(){
 
 void draw(){
   background(0);
+  
   if(!musicLoop.isPlaying()){
-    //musicLoop.play();
-    //musicLoop.amp(0.2);
+    musicLoop.play();
+    musicLoop.amp(0.2);
   }
   
   if(menu){
@@ -261,7 +269,7 @@ void draw(){
   if(rules){
     rules();
   }
-  else if(!menu && !rules){
+  if(!menu && !rules){
     returnToMenuFromGame.drawButton();
     if(!gameOver){
       playerDeck.drawDeck();
@@ -292,19 +300,25 @@ void draw(){
       }
     }
     else{
-      textSize(60);
-      fill(255);
-      stroke(255);
-      if(playerScore > compScore){
-        text("You Win!", width/2, height/2);
-        
+      if(phaseIndicatorFrameCount <= 1000){
+        textSize(60);
+        fill(255);
+        stroke(255);
+        if(playerScore > compScore){
+          text("You Win!", width/2, height/2);
+        }
+        else if(compScore > playerScore){
+          text("You Lose :(", width/2, height/2);
+        }
+        phaseIndicatorFrameCount++;
       }
-      else if(compScore > playerScore){
-        text("You Lose :(", width/2, height/2);
+      else{
+        resetGame();
       }
-      delay(10000);
-      menu = true;
     }
+  }
+  if(drawTypeChart){
+    image(typeChart, width/2, height/2);
   }
   
 }
@@ -374,35 +388,35 @@ void initializeDecks(){
           break;
           case VOLC:
             playerDeck.push(new Card(playerDeckX, playerDeckY, volcFrames, false, t, j, "", 1));
-            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, volcFrames, false, t, j, "", 1));
           break;
           case OCE:
             playerDeck.push(new Card(playerDeckX, playerDeckY, oceFrames, false, t, j, "", 1));
-            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, oceFrames, false, t, j, "", 1));
           break;
           case FOR:
             playerDeck.push(new Card(playerDeckX, playerDeckY, forFrames, false, t, j, "", 1));
-            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, forFrames, false, t, j, "", 1));
           break;
           case LAN:
             playerDeck.push(new Card(playerDeckX, playerDeckY, lanFrames, false, t, j, "", 1));
-            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, lanFrames, false, t, j, "", 1));
           break;
           case CAV:
             playerDeck.push(new Card(playerDeckX, playerDeckY, cavFrames, false, t, j, "", 1));
-            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, cavFrames, false, t, j, "", 1));
           break;
           case BRA:
             playerDeck.push(new Card(playerDeckX, playerDeckY, braFrames, false, t, j, "", 1));
-            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, braFrames, false, t, j, "", 1));
           break;
           case VOLT:
             playerDeck.push(new Card(playerDeckX, playerDeckY, voltFrames, false, t, j, "", 1));
-            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, voltFrames, false, t, j, "", 1));
           break;
           case NEU:
             playerDeck.push(new Card(playerDeckX, playerDeckY, neuFrames, false, t, j, "", 1));
-            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, neuFrames, false, t, j, "", 1));
           break;
           default:
             playerDeck.push(new Card(playerDeckX, playerDeckY, skyFrames, false, t, j, "", 1));
@@ -564,7 +578,16 @@ void mouseReleased(){
   }
 }
 
+void keyPressed(){
+  if(key == TAB){
+    drawTypeChart = true;
+  }
+}
+
 void keyReleased(){
+  if(key == TAB){
+    drawTypeChart = false;
+  }
   
   if(prepPhase && playerCardsInPrepZone == 3 && key == ENTER){
     prepPhase = false;
@@ -687,7 +710,7 @@ void prepPhase(){
   textSize(15);
   fill(255);
   stroke(255);
-  text("Select 3 monster cards to put on the field. ENTER to finalize", width/2, height - ((handPadY/2) + cardHeight));
+  text("Select 3 terrain cards to put on the field. ENTER to finalize", width/2, height - ((handPadY/2) + cardHeight));
   
   if(!compPrepCardsChosen){
     int rnd = rand.nextInt(10);
@@ -761,18 +784,6 @@ void spellPhase(){
 }
 
 void fightPhase(){
-  /*
-  if(!phaseIndicatorFlashed && !playerWonBattle && !compWonBattle){
-    textSize(60);
-    fill(255);
-    stroke(255);
-    text("FIGHT!", width/2, height/2);
-    phaseIndicatorFrameCount++;
-    if(phaseIndicatorFrameCount >= 200){
-      phaseIndicatorFlashed = true;
-    }
-  }
-  */
   float playerPower, compPower;
   playerPower = compPower = 0;
   if(!combatCalced){
@@ -837,10 +848,12 @@ void fightPhase(){
     println("Comp power: " + compPower);
     if(playerPower > compPower){
       playerScore++;
+      battleWon.play();
       playerWonBattle = true;
     }
     if(compPower > playerPower){
       compScore++;
+      battleLost.play();
       compWonBattle = true;
     }
     playerHand.cards[playerIndexOfCardInBattleZone].setPos(playerDiscardPos.x, playerDiscardPos.y);
@@ -1120,6 +1133,10 @@ void resetControllers(){
 void resetGame(){
   resetControllers();
   initializeDecks();
+  gameOver = false;
+  playerScore = 0;
+  compScore = 0;
+  menu = true;
   while(playerHand.handSize > -1 && compHand.handSize > -1){
     playerHand.removeCardFromHand(playerHand.handSize);
     compHand.removeCardFromHand(compHand.handSize);
