@@ -18,9 +18,25 @@ Psycho Shift - Triple your neuron monsters power
 
 */
 
+import processing.sound.*;
+
+SoundFile musicLoop;
+SoundFile drawCard;
+SoundFile moveCard;
 
 PImage background;
 PImage blankCard;
+PImage[] skyFrames = new PImage[4];
+PImage[] volcFrames = new PImage[4];
+PImage[] oceFrames = new PImage[4];
+PImage[] forFrames = new PImage[4];
+PImage[] lanFrames = new PImage[4];
+PImage[] cavFrames = new PImage[4];
+PImage[] braFrames = new PImage[4];
+PImage[] voltFrames = new PImage[4];
+PImage[] neuFrames = new PImage[4];
+PImage[] speFrames = new PImage[4];
+
 import java.util.*;
 static int deckSize = 50;
 static int maxHandSize = 10;
@@ -65,6 +81,8 @@ boolean fightPhase = false;
 boolean combatCalced = false;
 boolean playerWonBattle = false;
 boolean compWonBattle = false;
+boolean menu = true;
+boolean rules = false;
 
 int phaseIndicatorFrameCount = 0; //counter needs reset
 int playerCardsInPrepZone = 0; //counter needs reset
@@ -76,10 +94,19 @@ int compCardsInBattleZone = 0; //counter needs reset
 int playerCardsInSpellZone = 0; //counter needs reset
 int playerIndexOfCardInSpellZone = -1;
 int compIndexOfCardInSpellZone = -1;
+int totalCardsMoved = 0;
 
 int playerScore = 0;
 int compScore = 0;
 boolean gameOver = false;
+
+Button returnToMenuFromRules;
+Button returnToMenuFromGame;
+static int numMenuButtons = 3;
+Button[] menuButtons = new Button[numMenuButtons];
+static int menuButtonWidth = 800;
+static int menuButtonHeight = 100;
+static int menuButtonPadY = 30;
 
 Random rand = new Random(System.currentTimeMillis());
 
@@ -89,51 +116,21 @@ void setup(){
   
   playerDeckX = width-100;
   playerDeckY = height-handPadY;
-  background = loadImage("assets/background.jpg");
+  //background = loadImage("assets/background.jpg");
   blankCard = loadImage("assets/blankcard.png");
+  
+  musicLoop = new SoundFile(this, "assets/music-loop.mp3");
+  drawCard = new SoundFile(this, "assets/draw.wav");
+  drawCard.amp(0.3);
+  moveCard = new SoundFile(this, "assets/move-card.wav");
+  moveCard.amp(0.3);
+  
   imageMode(CENTER);
   rectMode(CENTER);
   
-  for(Type t : Type.values()){
-    for(int j = 1; j < 5; j++){
-      if(t != Type.SPE){
-        playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, t, j, "", 1));
-        compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, t, j, "", 1));
-       }
-    }
-  }
-  //CUT COUNTERSPELL ADD IN LATER IF TIME ALLOWS
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Power-Upl", 2));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Power-Up", 2));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Power-Up", 2));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Power-Up", 2));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Power-Up", 2));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Power-Up", 2));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Power-Down", 0.5));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Power-Down", 0.5));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Power-Down", 0.5));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Power-Down", 0.5));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Conflagerate", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Conflagerate", 3));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Tsunami", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Tsunami", 3));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Overgrowth", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Overgrowth", 3));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Earthquake", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Earthquake", 3));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Echo", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Echo", 3));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Deadlift", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Deadlift", 3));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Tornado", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Tornado", 3));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Overload", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Overload", 3));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, blankCard, false, Type.SPE, 0, "Psycho Shift", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, blankCard, false, Type.SPE, 0, "Psycho Shift", 3));
+  initializeFrames();
   
-  playerDeck.shuffleDeck();
-  compDeck.shuffleDeck();
+  initializeDecks();
   
   playerHandPos[0] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(4*cardWidth+4*handPadX), height-handPadY);
   playerHandPos[1] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(3*cardWidth+3*handPadX), height-handPadY);
@@ -172,130 +169,416 @@ void setup(){
   compSpellPos = new PVector(compBattlePos.x - (cardWidth + handPadX), compBattlePos.y);
   
   playerDiscardPos = new PVector(compDeckX, playerDeckY);
-  compDiscardPos = new PVector(playerDeckX, compDeckX);
+  compDiscardPos = new PVector(playerDeckX, compDeckY+50);
+  
+  returnToMenuFromRules = new Button(width/2, height - (2*menuButtonHeight), menuButtonWidth, menuButtonHeight, "Main Menu");
+  returnToMenuFromGame = new Button(width - 150, 50, menuButtonWidth/3, menuButtonHeight/2, "Main Menu");
+  menuButtons[0] = new Button(width/2, (height/2) - (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "Start Game");
+  menuButtons[1] = new Button(width/2, (height/2), menuButtonWidth, menuButtonHeight, "Rules");
+  menuButtons[2] = new Button(width/2, (height/2) + (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "High Scores");
+}
+
+void menu(){
+  fill(255);
+  textSize(90);
+  textAlign(CENTER, CENTER);
+  text("Terrain War", width/2, 300);
+  for(int i = 0; i < numMenuButtons; i++){
+    menuButtons[i].drawButton();
+  }
+}
+void rules(){
+  int currentX = 50;
+  int currentY = 30;
+  int yIncrement = 40;
+  int xIncrement = 40;
+  fill(255);
+  textSize(50);
+  text("RULES", width/2, currentY);
+  currentY += yIncrement;
+  textSize(25);
+  textAlign(LEFT, TOP);
+  text("Card Types:", currentX, currentY);
+  currentY += yIncrement;
+  currentX += xIncrement;
+  text("Terrain: Used to battle, each terrain card has a type and a power level", currentX, currentY);
+  currentY += yIncrement;
+  text("Spell: Used to enhance terrain cards", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  text("Type Matchups:", currentX, currentY);
+  currentY += yIncrement;
+  currentX += xIncrement;
+  text("Some types of terrain cards are better against others. Hold TAB at any time to show the typing cheat-sheet", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  text("Prep Phase:", currentX, currentY);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("Prepare at most 3 terrain cards to potentially do battle, after finalizing your choice your opponents prepped cards are revealed", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  text("Battle Phase:", currentX, currentY);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("Pick one card that will face off against your opponent's choice. After finalizing your choice your opponents choice is revealed", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  text("Spell Phase:", currentX, currentY);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("Pick a spell to enhance your terrain cards. Some spells can only be played when you have a certain type of terrain card battling for example the spell", currentX, currentY);
+  currentY += yIncrement;
+  text("Overload can only be played while you have a Voltage type terrain in battle.", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  text("Spell Multipliers:", currentX, currentY);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("Spells apply a multiplier to the power of your terrain card; Power-Up applies a 2x, Power-Down applies a 0.5x to your opponnent, and all spells that are", currentX, currentY);
+  currentY += yIncrement;
+  text("type-specific apply a 3x", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  text("When does the game end?", currentX, currentY);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("The game ends when either player has 0 cards in their deck or either player has no terrain cards in hand", currentX, currentY);
+  textAlign(CENTER, CENTER);
+  returnToMenuFromRules.drawButton();
 }
 
 void draw(){
   background(0);
-  
-  playerDeck.drawDeck();
-  compDeck.drawDeck();
-  playerHand.drawHand();
-  compHand.drawHand();
-  
-  drawScores();
-
-  if(!initialHandsDrawn){ 
-    drawInitialHands();
-    if(compDeck.top == 0 || playerDeck.top == 0){
-      gameOver = true;
-    }
+  if(!musicLoop.isPlaying()){
+    //musicLoop.play();
+    //musicLoop.amp(0.2);
   }
-  if(!gameOver){
-    if(prepPhase){
-      prepPhase();
-    }
-    else if(battlePhase){
-      battlePhase();
-    }
-    else if(spellPhase){
-      spellPhase();
-    }
-    else if(fightPhase){
-      fightPhase();
-    }
-  }
-}
   
-
-void mouseReleased(){
-  int indexOfCardClicked = -1;
-  for(int i = 0; i < playerHand.getHandSize()+1; i++){
-    if(playerHand.getCardAtIndex(i).mouseOver()){
-      indexOfCardClicked = i;
-    }
+  if(menu){
+    menu();
   }
-  if(prepPhase){
-    //card is clicked to put into prep zone
-    if(indexOfCardClicked != -1 && playerCardsInPrepZone != 3 && playerHand.cards[indexOfCardClicked].prepSlotTaken == -1 && playerHand.cards[indexOfCardClicked].type != Type.SPE){
-      if(prepSlotsOpen[playerCardsInPrepZone]){
-        prepSlotsOpen[playerCardsInPrepZone] = false;
-        playerHand.cards[indexOfCardClicked].prepSlotTaken = playerCardsInPrepZone;
-        println("Found slot at: " + playerCardsInPrepZone);
-        playerHand.cards[indexOfCardClicked].setPos(playerPrepPos[playerCardsInPrepZone].x, playerPrepPos[playerCardsInPrepZone].y);
-        playerHand.cards[indexOfCardClicked].inPrepZone = true;
-      }
-      else{
-        boolean slotFound = false;
-        for(int i = 0; i < 3; i++){
-          if(prepSlotsOpen[i] && !slotFound){
-            prepSlotsOpen[i] = false;
-            playerHand.cards[indexOfCardClicked].prepSlotTaken = i;
-            playerHand.cards[indexOfCardClicked].setPos(playerPrepPos[i].x, playerPrepPos[i].y);
-            println("Found slot at: " + i);
-            playerHand.cards[i].inPrepZone = true;
-            slotFound = true;
-          }
+  if(rules){
+    rules();
+  }
+  else if(!menu && !rules){
+    returnToMenuFromGame.drawButton();
+    if(!gameOver){
+      playerDeck.drawDeck();
+      compDeck.drawDeck();
+      playerHand.drawHand();
+      compHand.drawHand();
+      
+      drawScores();
+    
+      if(!initialHandsDrawn){ 
+        drawFullHands();
+        if(compDeck.top == -1 || playerDeck.top == -1){
+          gameOver = true;
         }
       }
-      playerCardsInPrepZone++;
+    
+      if(prepPhase){
+        prepPhase();
+      }
+      else if(battlePhase){
+        battlePhase();
+      }
+      else if(spellPhase){
+        spellPhase();
+      }
+      else if(fightPhase){
+        fightPhase();
+      }
     }
-    //card is clicked to remove from prep zone
-    else if(indexOfCardClicked != -1 && playerCardsInPrepZone != 0 && playerHand.cards[indexOfCardClicked].prepSlotTaken != -1){
-      println("Moving card back to hand");
-      playerHand.cards[indexOfCardClicked].setPos(playerHandPos[indexOfCardClicked].x, playerHandPos[indexOfCardClicked].y);
-      prepSlotsOpen[playerHand.cards[indexOfCardClicked].prepSlotTaken] = true;
-      playerHand.cards[indexOfCardClicked].prepSlotTaken = -1;
-      playerHand.cards[indexOfCardClicked].inPrepZone = false;
-      playerCardsInPrepZone--;
+    else{
+      textSize(60);
+      fill(255);
+      stroke(255);
+      if(playerScore > compScore){
+        text("You Win!", width/2, height/2);
+        
+      }
+      else if(compScore > playerScore){
+        text("You Lose :(", width/2, height/2);
+      }
+      delay(10000);
+      menu = true;
     }
   }
-  if(battlePhase){
-    if(indexOfCardClicked != -1 && playerCardsInBattleZone != 1 && !playerHand.cards[indexOfCardClicked].inBattleZone && playerHand.cards[indexOfCardClicked].inPrepZone){
-      println("SHOULD SEE THIS ONCE");
-      playerHand.cards[indexOfCardClicked].setPos(playerBattlePos.x, playerBattlePos.y);
-      playerHand.cards[indexOfCardClicked].inBattleZone = true;
-      playerIndexOfCardInBattleZone = indexOfCardClicked;
-      playerCardsInBattleZone++;
-      playerCardsInPrepZone--;
-    }
-    else if(indexOfCardClicked != -1 && playerCardsInBattleZone == 1 && !playerHand.cards[indexOfCardClicked].inBattleZone && playerHand.cards[indexOfCardClicked].inPrepZone){
-      println("Prep Zone Slot of card clicked: " + playerHand.cards[indexOfCardClicked].prepSlotTaken);
-      playerHand.cards[playerIndexOfCardInBattleZone].setPos(playerPrepPos[playerHand.cards[playerIndexOfCardInBattleZone].prepSlotTaken].x, playerPrepPos[playerHand.cards[playerIndexOfCardInBattleZone].prepSlotTaken].y);
-      playerHand.cards[indexOfCardClicked].setPos(playerBattlePos.x, playerBattlePos.y);
-      playerHand.cards[indexOfCardClicked].inBattleZone = true;
-      playerHand.cards[playerIndexOfCardInBattleZone].inBattleZone = false;
-      playerIndexOfCardInBattleZone = indexOfCardClicked;
+  
+}
+
+void initializeFrames(){
+  skyFrames[0] = loadImage("assets/0Sky0001.png");
+  skyFrames[1] = loadImage("assets/0Sky0002.png");
+  skyFrames[2] = loadImage("assets/0Sky0003.png");
+  skyFrames[3] = loadImage("assets/0Sky0004.png");
+  
+  volcFrames[0] = loadImage("assets/0Sky0001.png");
+  volcFrames[1] = loadImage("assets/0Sky0001.png");
+  volcFrames[2] = loadImage("assets/0Sky0001.png");
+  volcFrames[3] = loadImage("assets/0Sky0001.png");
+  
+  oceFrames[0] = loadImage("assets/0Sky0001.png");
+  oceFrames[1] = loadImage("assets/0Sky0001.png");
+  oceFrames[2] = loadImage("assets/0Sky0001.png");
+  oceFrames[3] = loadImage("assets/0Sky0001.png");
+  
+  lanFrames[0] = loadImage("assets/0Sky0001.png");
+  lanFrames[1] = loadImage("assets/0Sky0001.png");
+  lanFrames[2] = loadImage("assets/0Sky0001.png");
+  lanFrames[3] = loadImage("assets/0Sky0001.png");
+  
+  forFrames[0] = loadImage("assets/0Sky0001.png");
+  forFrames[1] = loadImage("assets/0Sky0001.png");
+  forFrames[2] = loadImage("assets/0Sky0001.png");
+  forFrames[3] = loadImage("assets/0Sky0001.png");
+  
+  cavFrames[0] = loadImage("assets/0Sky0001.png");
+  cavFrames[1] = loadImage("assets/0Sky0001.png");
+  cavFrames[2] = loadImage("assets/0Sky0001.png");
+  cavFrames[3] = loadImage("assets/0Sky0001.png");
+  
+  braFrames[0] = loadImage("assets/0Sky0001.png");
+  braFrames[1] = loadImage("assets/0Sky0001.png");
+  braFrames[2] = loadImage("assets/0Sky0001.png");
+  braFrames[3] = loadImage("assets/0Sky0001.png");
+  
+  voltFrames[0] = loadImage("assets/0Sky0001.png");
+  voltFrames[1] = loadImage("assets/0Sky0001.png");
+  voltFrames[2] = loadImage("assets/0Sky0001.png");
+  voltFrames[3] = loadImage("assets/0Sky0001.png");
+  
+  neuFrames[0] = loadImage("assets/0Sky0001.png");
+  neuFrames[1] = loadImage("assets/0Sky0001.png");
+  neuFrames[2] = loadImage("assets/0Sky0001.png");
+  neuFrames[3] = loadImage("assets/0Sky0001.png");
+  
+  speFrames[0] = loadImage("assets/0Sky0001.png");
+  speFrames[1] = loadImage("assets/0Sky0001.png");
+  speFrames[2] = loadImage("assets/0Sky0001.png");
+  speFrames[3] = loadImage("assets/0Sky0001.png");
+}
+
+void initializeDecks(){
+  playerDeck = new DeckStack();
+  compDeck = new DeckStack();
+  for(Type t : Type.values()){
+    for(int j = 1; j < 5; j++){
+      if(t != Type.SPE){
+        switch(t){
+          case SKY:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          case VOLC:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, volcFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          case OCE:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, oceFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          case FOR:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, forFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          case LAN:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, lanFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          case CAV:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, cavFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          case BRA:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, braFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          case VOLT:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, voltFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          case NEU:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, neuFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+          default:
+            playerDeck.push(new Card(playerDeckX, playerDeckY, skyFrames, false, t, j, "", 1));
+            compDeck.push(new Card(compDeckX, compDeckY, skyFrames, false, t, j, "", 1));
+          break;
+        }
+      }
     }
   }
-  if(spellPhase){
-    //select a spell to put in spell zone
-    if(indexOfCardClicked != -1 && playerHand.cards[indexOfCardClicked].type == Type.SPE && !playerHand.cards[indexOfCardClicked].inSpellZone && playerCardsInSpellZone != 1 && checkValidSpell(playerHand.cards[playerIndexOfCardInBattleZone], playerHand.cards[indexOfCardClicked])){
-      playerHand.cards[indexOfCardClicked].setPos(playerSpellPos.x, playerSpellPos.y);
-      playerHand.cards[indexOfCardClicked].inSpellZone = true;
-      playerCardsInSpellZone++;
-      playerIndexOfCardInSpellZone = indexOfCardClicked;
+  //CUT COUNTERSPELL ADD IN LATER IF TIME ALLOWS
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Power-Up", 2));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Power-Up", 2));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Power-Up", 2));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Power-Up", 2));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Power-Up", 2));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Power-Up", 2));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Power-Down", 0.5));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Power-Down", 0.5));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Power-Down", 0.5));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Power-Down", 0.5));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Conflagerate", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Conflagerate", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Tsunami", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Tsunami", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Overgrowth", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Overgrowth", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Earthquake", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Earthquake", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Echo", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Echo", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Deadlift", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Deadlift", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Tornado", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Tornado", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Overload", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Overload", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Psycho Shift", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Psycho Shift", 3));
+  
+  playerDeck.shuffleDeck();
+  compDeck.shuffleDeck();
+}
+
+void mouseReleased(){
+  if(menu){
+    int indexOfButtonClicked = -1;
+    for(int i = 0; i < numMenuButtons; i++){
+      if(menuButtons[i].mouseOver()){
+        indexOfButtonClicked = i;
+      }
     }
-    //selected the spell in spell zone to put back in hand
-    else if(indexOfCardClicked == playerIndexOfCardInSpellZone){
-      playerHand.cards[playerIndexOfCardInSpellZone].setPos(playerHandPos[playerIndexOfCardInSpellZone].x, playerHandPos[playerIndexOfCardInSpellZone].y);
-      playerHand.cards[playerIndexOfCardInSpellZone].inSpellZone = false;
-      playerCardsInSpellZone--;
+    if(indexOfButtonClicked == 0){
+      menu = false;
     }
-    //select a spell to swap with current spell zone card
-    else if(indexOfCardClicked != -1 && playerHand.cards[indexOfCardClicked].type == Type.SPE && !playerHand.cards[indexOfCardClicked].inSpellZone && playerCardsInSpellZone == 1 && checkValidSpell(playerHand.cards[playerIndexOfCardInBattleZone], playerHand.cards[indexOfCardClicked])){
-      playerHand.cards[indexOfCardClicked].setPos(playerSpellPos.x, playerSpellPos.y);
-      playerHand.cards[playerIndexOfCardInSpellZone].inSpellZone = false;
-      playerHand.cards[playerIndexOfCardInSpellZone].setPos(playerHandPos[playerIndexOfCardInSpellZone].x, playerHandPos[playerIndexOfCardInSpellZone].y);
-      playerHand.cards[indexOfCardClicked].inSpellZone = true;
-      playerIndexOfCardInSpellZone = indexOfCardClicked;
+    if(indexOfButtonClicked == 1){
+      rules = true;
+      menu = false;
+    }
+    if(indexOfButtonClicked == 2){
+      
+    }
+  }
+  if(rules){
+    if(returnToMenuFromRules.mouseOver()){
+      rules = false;
+      menu = true;
+    }
+  }
+  else{
+    if(returnToMenuFromGame.mouseOver()){
+      menu = true;
+      resetGame();
+    }
+    if(!menu){
+      int indexOfCardClicked = -1;
+      for(int i = 0; i < playerHand.getHandSize()+1; i++){
+        if(playerHand.getCardAtIndex(i).mouseOver()){
+          indexOfCardClicked = i;
+        }
+      }
+      if(prepPhase){
+        //card is clicked to put into prep zone
+        if(indexOfCardClicked != -1 && playerCardsInPrepZone != 3 && playerHand.cards[indexOfCardClicked].prepSlotTaken == -1 && playerHand.cards[indexOfCardClicked].type != Type.SPE){
+          if(prepSlotsOpen[playerCardsInPrepZone]){
+            prepSlotsOpen[playerCardsInPrepZone] = false;
+            playerHand.cards[indexOfCardClicked].prepSlotTaken = playerCardsInPrepZone;
+            println("Found slot at: " + playerCardsInPrepZone);
+            playerHand.cards[indexOfCardClicked].setPos(playerPrepPos[playerCardsInPrepZone].x, playerPrepPos[playerCardsInPrepZone].y);
+            playerHand.cards[indexOfCardClicked].inPrepZone = true;
+          }
+          else{
+            boolean slotFound = false;
+            for(int i = 0; i < 3; i++){
+              if(prepSlotsOpen[i] && !slotFound){
+                prepSlotsOpen[i] = false;
+                playerHand.cards[indexOfCardClicked].prepSlotTaken = i;
+                playerHand.cards[indexOfCardClicked].setPos(playerPrepPos[i].x, playerPrepPos[i].y);
+                println("Found slot at: " + i);
+                playerHand.cards[i].inPrepZone = true;
+                slotFound = true;
+              }
+            }
+          }
+          playerCardsInPrepZone++;
+        }
+        //card is clicked to remove from prep zone
+        else if(indexOfCardClicked != -1 && playerCardsInPrepZone != 0 && playerHand.cards[indexOfCardClicked].prepSlotTaken != -1){
+          println("Moving card back to hand");
+          playerHand.cards[indexOfCardClicked].setPos(playerHandPos[indexOfCardClicked].x, playerHandPos[indexOfCardClicked].y);
+          prepSlotsOpen[playerHand.cards[indexOfCardClicked].prepSlotTaken] = true;
+          playerHand.cards[indexOfCardClicked].prepSlotTaken = -1;
+          playerHand.cards[indexOfCardClicked].inPrepZone = false;
+          playerCardsInPrepZone--;
+        }
+      }
+      if(battlePhase){
+        if(indexOfCardClicked != -1 && playerCardsInBattleZone != 1 && !playerHand.cards[indexOfCardClicked].inBattleZone && playerHand.cards[indexOfCardClicked].inPrepZone){
+          println("SHOULD SEE THIS ONCE");
+          playerHand.cards[indexOfCardClicked].setPos(playerBattlePos.x, playerBattlePos.y);
+          playerHand.cards[indexOfCardClicked].inBattleZone = true;
+          playerIndexOfCardInBattleZone = indexOfCardClicked;
+          playerCardsInBattleZone++;
+          playerCardsInPrepZone--;
+        }
+        else if(indexOfCardClicked != -1 && playerCardsInBattleZone == 1 && !playerHand.cards[indexOfCardClicked].inBattleZone && playerHand.cards[indexOfCardClicked].inPrepZone){
+          println("Prep Zone Slot of card clicked: " + playerHand.cards[indexOfCardClicked].prepSlotTaken);
+          playerHand.cards[playerIndexOfCardInBattleZone].setPos(playerPrepPos[playerHand.cards[playerIndexOfCardInBattleZone].prepSlotTaken].x, playerPrepPos[playerHand.cards[playerIndexOfCardInBattleZone].prepSlotTaken].y);
+          playerHand.cards[indexOfCardClicked].setPos(playerBattlePos.x, playerBattlePos.y);
+          playerHand.cards[indexOfCardClicked].inBattleZone = true;
+          playerHand.cards[playerIndexOfCardInBattleZone].inBattleZone = false;
+          playerIndexOfCardInBattleZone = indexOfCardClicked;
+        }
+      }
+      if(spellPhase){
+        //select a spell to put in spell zone
+        if(indexOfCardClicked != -1 && playerHand.cards[indexOfCardClicked].type == Type.SPE && !playerHand.cards[indexOfCardClicked].inSpellZone && playerCardsInSpellZone != 1 && checkValidSpell(playerHand.cards[playerIndexOfCardInBattleZone], playerHand.cards[indexOfCardClicked])){
+          playerHand.cards[indexOfCardClicked].setPos(playerSpellPos.x, playerSpellPos.y);
+          playerHand.cards[indexOfCardClicked].inSpellZone = true;
+          playerCardsInSpellZone++;
+          playerIndexOfCardInSpellZone = indexOfCardClicked;
+        }
+        //selected the spell in spell zone to put back in hand
+        else if(indexOfCardClicked == playerIndexOfCardInSpellZone && indexOfCardClicked != -1){
+          playerHand.cards[playerIndexOfCardInSpellZone].setPos(playerHandPos[playerIndexOfCardInSpellZone].x, playerHandPos[playerIndexOfCardInSpellZone].y);
+          playerHand.cards[playerIndexOfCardInSpellZone].inSpellZone = false;
+          playerIndexOfCardInSpellZone = -1;
+          playerCardsInSpellZone--;
+        }
+        //select a spell to swap with current spell zone card
+        else if(indexOfCardClicked != -1 && playerHand.cards[indexOfCardClicked].type == Type.SPE && !playerHand.cards[indexOfCardClicked].inSpellZone && playerCardsInSpellZone == 1 && checkValidSpell(playerHand.cards[playerIndexOfCardInBattleZone], playerHand.cards[indexOfCardClicked])){
+          playerHand.cards[indexOfCardClicked].setPos(playerSpellPos.x, playerSpellPos.y);
+          playerHand.cards[playerIndexOfCardInSpellZone].inSpellZone = false;
+          playerHand.cards[playerIndexOfCardInSpellZone].setPos(playerHandPos[playerIndexOfCardInSpellZone].x, playerHandPos[playerIndexOfCardInSpellZone].y);
+          playerHand.cards[indexOfCardClicked].inSpellZone = true;
+          playerIndexOfCardInSpellZone = indexOfCardClicked;
+        }
+      }
     }
   }
 }
 
 void keyReleased(){
+  
   if(prepPhase && playerCardsInPrepZone == 3 && key == ENTER){
-    //compSpellCardChosen = false;
+    prepPhase = false;
+    phaseIndicatorFlashed = false;
+    battlePhase = true;
+    compPrepCardsChosen = false;
+    phaseIndicatorFrameCount = 0;
+    for(int i = 0; i < maxHandSize; i++){
+      if(compHand.cards[i].inPrepZone){
+        compHand.cards[i].setShow(true);
+      }
+    }
+  }
+  else if(prepPhase && playerCardsInPrepZone < 3  && playerCardsInPrepZone >= 1 && playerHand.monsterCount < 3 && key == ENTER){
     prepPhase = false;
     phaseIndicatorFlashed = false;
     battlePhase = true;
@@ -332,6 +615,11 @@ void keyReleased(){
     spellPhase = false;
     fightPhase = true;
   }
+  else if(fightPhase){
+    playerWonBattle = false;
+    compWonBattle = false;
+    resetControllers();
+  }
 }
 
 Card[] shuffle(Card[] c, int numItems){
@@ -347,7 +635,7 @@ Card[] shuffle(Card[] c, int numItems){
   return temp;
 }
 
-void drawInitialHands(){
+void drawFullHands(){
   if(playerHand.getHandSize() != 9){
     playerHand.addCardToHand(playerDeck.peek());
     playerDeck.pop();
@@ -359,6 +647,28 @@ void drawInitialHands(){
   if(compHand.getHandSize() == 9 && playerHand.getHandSize() == 9){
     initialHandsDrawn = true;
     prepPhase = true;
+  }
+  if(playerHand.handSize == 9 && compHand.handSize == 9){
+    for(int i = 0; i < maxHandSize; i++){
+      playerHand.cards[i].inPrepZone = false;
+      playerHand.cards[i].inBattleZone = false;
+      playerHand.cards[i].inSpellZone = false;
+      playerHand.cards[i].prepSlotTaken = -1;
+      
+      compHand.cards[i].inPrepZone = false;
+      compHand.cards[i].inBattleZone = false;
+      compHand.cards[i].inSpellZone = false;
+      compHand.cards[i].prepSlotTaken = -1;
+      compHand.cards[i].show = false;
+      if(playerHand.monsterCount == 0 || compHand.monsterCount == 0){
+        gameOver = true;
+      }
+      
+    }
+    println("Player monster count: " + playerHand.monsterCount);
+    println("Comp monster count: " + compHand.monsterCount);
+    println("Player cards in deck: " + (playerDeck.top+1));
+    println("Comp cards in deck: " + (compDeck.top+1));
   }
 }
 
@@ -381,7 +691,11 @@ void prepPhase(){
   
   if(!compPrepCardsChosen){
     int rnd = rand.nextInt(10);
-    for(int i = 0; i < 3; i++){
+    int monstersNeededInPrepZone = 3;
+    if(compHand.monsterCount < 3){
+      monstersNeededInPrepZone = compHand.monsterCount;
+    }
+    for(int i = 0; i < monstersNeededInPrepZone; i++){
       while(compHand.cards[rnd].type == Type.SPE || compHand.cards[rnd].inPrepZone){
         rnd = rand.nextInt(10);
       }
@@ -447,6 +761,7 @@ void spellPhase(){
 }
 
 void fightPhase(){
+  /*
   if(!phaseIndicatorFlashed && !playerWonBattle && !compWonBattle){
     textSize(60);
     fill(255);
@@ -457,10 +772,11 @@ void fightPhase(){
       phaseIndicatorFlashed = true;
     }
   }
+  */
   float playerPower, compPower;
   playerPower = compPower = 0;
   if(!combatCalced){
-    Card blank0Mult = new Card(0, 0, blankCard, false, Type.SPE, 0, "", 0);
+    Card blank0Mult = new Card(0, 0, speFrames, false, Type.SPE, 0, "", 1);
     Type compType = compHand.cards[compIndexOfCardInBattleZone].type;
     Type playerType = playerHand.cards[playerIndexOfCardInBattleZone].type;
     //both players have a spell
@@ -529,7 +845,6 @@ void fightPhase(){
     }
     playerHand.cards[playerIndexOfCardInBattleZone].setPos(playerDiscardPos.x, playerDiscardPos.y);
     playerHand.removeCardFromHand(playerIndexOfCardInBattleZone);
-    println("Comp index of card in battle zone: " + compIndexOfCardInBattleZone);
     compHand.cards[compIndexOfCardInBattleZone].setPos(compDiscardPos.x, compDiscardPos.y);
     compHand.removeCardFromHand(compIndexOfCardInBattleZone);
     if(playerIndexOfCardInSpellZone != -1){
@@ -542,7 +857,7 @@ void fightPhase(){
     }
     combatCalced = true;
     phaseIndicatorFrameCount = 0;
-    
+    phaseIndicatorFlashed = false;
   }
   if(playerWonBattle){
     if(!phaseIndicatorFlashed){
@@ -568,9 +883,23 @@ void fightPhase(){
         }
       }
   }
-  playerWonBattle = false;
-  compWonBattle = false;
-  resetControllers();
+  if(!compWonBattle && !playerWonBattle){
+    if(!phaseIndicatorFlashed){
+        textSize(60);
+        fill(255);
+        stroke(255);
+        text("Tie!", width/2, height/2);
+        phaseIndicatorFrameCount++;
+        if(phaseIndicatorFrameCount >= 200){
+          phaseIndicatorFlashed = true;
+        }
+      }
+  }
+  textAlign(CENTER, CENTER);
+  textSize(15);
+  fill(255);
+  stroke(255);
+  text("ENTER to continue to next turn", width/2, height - ((handPadY/2) + cardHeight));
 }
 
 float calcScore(Card mon, Type oppType, Card spe, Card powerDown){ //if no power down was played pass a blank 0x spell
@@ -635,14 +964,12 @@ float calcScore(Card mon, Type oppType, Card spe, Card powerDown){ //if no power
     
     break;
   }
-  print(" + ");
-  if(spe.multiplier != 0){
-    p += mon.power*(1/spe.multiplier);
-    print(mon.power*(1/spe.multiplier));
-  }
-  print(" - ");
-  p -= mon.power*powerDown.multiplier;
-  println(mon.power*powerDown.multiplier);
+  print(" * ");
+  p *= spe.multiplier;
+  print(spe.multiplier);
+  print(" * ");
+  p *= powerDown.multiplier;
+  println(powerDown.multiplier);
   
   return p;
 }
@@ -750,8 +1077,8 @@ void drawScores(){
   textAlign(CENTER, CENTER);
   fill(255);
   textSize(25);
-  text("Player Score: " + playerScore, playerDeckX, playerDeckY - ((cardHeight/2) + (3*handPadX/2)));
-  text("Comp Score: " + compScore, compDeckX, compDeckY + (cardHeight/2) + (3*handPadX/2));
+  text("Score: " + playerScore, playerDeckX, playerDeckY - ((cardHeight/2) + (3*handPadX/2)));
+  text("Score: " + compScore, compDeckX, compDeckY + (cardHeight/2) + (3*handPadX/2));
 }
 
 void resetControllers(){
@@ -787,5 +1114,14 @@ void resetControllers(){
     if(!compHand.openIndices[i]){
       compHand.cards[i].setPos(compHandPos[i].x, compHandPos[i].y);
     }
+  }
+}
+
+void resetGame(){
+  resetControllers();
+  initializeDecks();
+  while(playerHand.handSize > -1 && compHand.handSize > -1){
+    playerHand.removeCardFromHand(playerHand.handSize);
+    compHand.removeCardFromHand(compHand.handSize);
   }
 }

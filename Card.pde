@@ -1,21 +1,22 @@
 class Card{
   private int power;
   private boolean show;
-  private PImage img;
+  private PImage[] frames;
   private Type type;
   private String name;
   private float scaleIncrement, x, y, targetX, targetY;
   private boolean upScale, inPrepZone, moving, inBattleZone, inSpellZone;
   private int prepSlotTaken = -1;
   private float multiplier;
+  int currentFrame = 0;
   
-  Card(float x, float y, PImage i, boolean s, Type t, int p, String n, float m){
+  Card(float x, float y, PImage[] i, boolean s, Type t, int p, String n, float m){
     this.x = x;
     this.y = y;
     this.targetX = x;
     this.targetY = y;
     this.show = s;
-    this.img = i;
+    this.frames = i;
     this.type = t;
     this.power = p;
     this.name = n;
@@ -29,8 +30,15 @@ class Card{
   }
  
   void setPos(float finalX, float finalY){
+    totalCardsMoved++;
     targetX = finalX;
     targetY = finalY;
+    if(!drawCard.isPlaying()){
+      if(!moveCard.isPlaying()){
+        moveCard.play();
+        moveCard.amp(0.2);
+      }
+    }
   }
   
   void setShow(boolean s){
@@ -152,7 +160,20 @@ class Card{
     if(!show){
       fill(100, 120, 120);
     }
-    rect(0,0,cardWidth,cardHeight);
+    if(type != Type.SKY || !show){
+      rect(0,0,cardWidth,cardHeight);
+    }
+    else{
+      scale(0.25);
+      image(frames[floor(currentFrame/15)], 0, 0);
+      if(currentFrame <= 59){
+        currentFrame++;
+      }
+      if(currentFrame > 59){
+        currentFrame = 0;
+      }
+      scale(4);
+    }
     
     textAlign(CENTER, CENTER);
     //stroke(0);

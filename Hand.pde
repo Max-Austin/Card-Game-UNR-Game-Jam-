@@ -5,6 +5,7 @@ class Hand{
   private Card[] cards = new Card[maxHandSize];
   private int handSize;
   boolean[] openIndices = {true, true, true, true, true, true, true, true, true, true};
+  int monsterCount = 0;
   
   Hand(Card[] c, boolean p, int h){
     this.cards = c;
@@ -22,9 +23,21 @@ class Hand{
     
     if(canAdd){
       handSize++;
-      int i = handSize;
+      drawCard.amp(0.3);
+      if(!drawCard.isPlaying()){
+        drawCard.play();
+      }
+      else{
+        drawCard.jump(0.1);
+      }
+      if(c.type != Type.SPE){
+        monsterCount++;
+      }
+      int i = 0;
       while(!openIndices[i]){
-        i++;
+        if(i != 9){
+          i++;
+        }
       }
       cards[i] = c;
       openIndices[i] = false;
@@ -46,7 +59,11 @@ class Hand{
   
   boolean removeCardFromHand(int index){
     if(handSize != -1){
+      if(cards[index].type != Type.SPE){
+        monsterCount--;
+      }
       openIndices[index] = true;
+      handSize--;
       return true;
     }
     return false;
