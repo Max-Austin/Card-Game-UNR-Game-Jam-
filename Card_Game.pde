@@ -29,9 +29,16 @@ SoundFile moveCard;
 SoundFile battleWon;
 SoundFile battleLost;
 
-PImage background;
+PImage menuBackground;
+PImage gameBackground;
 PImage blankCard;
 PImage typeChart;
+PImage cardBack;
+PImage battlePhaseImg;
+PImage prepPhaseImg;
+PImage battleWonImg;
+PImage battleLostImg;
+PImage logo;
 PImage[] skyFrames = new PImage[4];
 PImage[] volcFrames = new PImage[4];
 PImage[] oceFrames = new PImage[4];
@@ -55,6 +62,7 @@ static int cardWidth = 82;
 static int cardHeight = 128;
 static int handPadX = 10;
 static int handPadY = 100;
+static int menuOffSetY = 150;
 
 PVector[] playerHandPos = new PVector[10];
 PVector[] compHandPos = new PVector[10];
@@ -123,9 +131,17 @@ void setup(){
   
   playerDeckX = width-100;
   playerDeckY = height-handPadY;
-  //background = loadImage("assets/background.jpg");
+  
+  menuBackground = loadImage("assets/Menu-Background.png");
+  gameBackground = loadImage("assets/Game-Background.png");
   blankCard = loadImage("assets/blankcard.png");
   typeChart = loadImage("assets/type-chart.PNG");
+  cardBack = loadImage("assets/CardBack.png");
+  prepPhaseImg = loadImage("assets/PrepPhase.png");
+  battlePhaseImg = loadImage("assets/BattlePhase.png");
+  logo = loadImage("assets/Logo.png");
+  battleWonImg = loadImage("assets/BattleWon.png");
+  battleLostImg = loadImage("assets/BattleLost.png");
   
   musicLoop = new SoundFile(this, "assets/music-loop.mp3");
   drawCard = new SoundFile(this, "assets/draw.wav");
@@ -180,16 +196,20 @@ void setup(){
   
   returnToMenuFromRules = new Button(width/2, height - (2*menuButtonHeight), menuButtonWidth, menuButtonHeight, "Main Menu");
   returnToMenuFromGame = new Button(width - 150, 50, menuButtonWidth/3, menuButtonHeight/2, "Main Menu");
-  menuButtons[0] = new Button(width/2, (height/2) - (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "Start Game");
-  menuButtons[1] = new Button(width/2, (height/2), menuButtonWidth, menuButtonHeight, "Rules");
-  menuButtons[2] = new Button(width/2, (height/2) + (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "High Scores (Under Construction)");
+  menuButtons[0] = new Button(width/2, (height/2) + menuOffSetY - (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "Start Game");
+  menuButtons[1] = new Button(width/2, (height/2) + menuOffSetY, menuButtonWidth, menuButtonHeight, "Rules");
+  menuButtons[2] = new Button(width/2, (height/2) + (menuButtonHeight + (menuButtonPadY/2) + menuOffSetY), menuButtonWidth, menuButtonHeight, "High Scores (Under Construction)");
 }
 
 void menu(){
   fill(255);
   textSize(90);
   textAlign(CENTER, CENTER);
-  text("Terrain War", width/2, 300);
+  pushMatrix();
+  translate(width/2, 200+menuOffSetY);
+  scale(0.75);
+  image(logo, 0, 0);
+  popMatrix();
   for(int i = 0; i < numMenuButtons; i++){
     menuButtons[i].drawButton();
   }
@@ -205,62 +225,71 @@ void rules(){
   currentY += yIncrement;
   textSize(25);
   textAlign(LEFT, TOP);
+  text("Who am I playing against? A computer that makes purely random decisions.", currentX, currentY);
+  currentY += yIncrement;
   text("Card Types:", currentX, currentY);
   currentY += yIncrement;
   currentX += xIncrement;
-  text("Terrain: Used to battle, each terrain card has a type and a power level", currentX, currentY);
+  text("Terrain: Used to battle, each terrain card has a type and power level indicated on the card.", currentX, currentY);
   currentY += yIncrement;
-  text("Spell: Used to enhance terrain cards", currentX, currentY);
+  text("Spell: Used to enhance terrain cards.", currentX, currentY);
   currentX -= xIncrement;
   currentY += yIncrement;
   text("Type Matchups:", currentX, currentY);
   currentY += yIncrement;
   currentX += xIncrement;
-  text("Some types of terrain cards are better against others. Hold TAB at any time to show the typing cheat-sheet", currentX, currentY);
+  text("Some types of terrain cards are better against others. Hold TAB at any time to show the typing cheat-sheet.", currentX, currentY);
   currentX -= xIncrement;
   currentY += yIncrement;
   text("Prep Phase:", currentX, currentY);
   currentX += xIncrement;
   currentY += yIncrement;
-  text("Prepare at most 3 terrain cards to potentially do battle, after finalizing your choice your opponents prepped cards are revealed", currentX, currentY);
+  text("Prepare at most 3 terrain cards to potentially do battle, and, after finalizing your choice, your opponents' prepped cards are revealed.", currentX, currentY);
   currentX -= xIncrement;
   currentY += yIncrement;
   text("Battle Phase:", currentX, currentY);
   currentX += xIncrement;
   currentY += yIncrement;
-  text("Pick one card that will face off against your opponent's choice. After finalizing your choice your opponents choice is revealed", currentX, currentY);
+  text("Pick one card that will face off against your opponent's choice. After finalizing your choice your opponent's choice is revealed", currentX, currentY);
   currentX -= xIncrement;
   currentY += yIncrement;
   text("Spell Phase:", currentX, currentY);
   currentX += xIncrement;
   currentY += yIncrement;
-  text("Pick a spell to enhance your terrain cards. Some spells can only be played when you have a certain type of terrain card battling for example the spell", currentX, currentY);
+  text("Pick a spell to enhance your terrain cards. Some spells can only be played when you have a certain type of terrain card battling. For example, the", currentX, currentY);
   currentY += yIncrement;
-  text("Overload can only be played while you have a Voltage type terrain in battle.", currentX, currentY);
+  text("spell Overload can only be played while you have a Voltage type terrain in battle.", currentX, currentY);
   currentX -= xIncrement;
   currentY += yIncrement;
   text("Spell Multipliers:", currentX, currentY);
   currentX += xIncrement;
   currentY += yIncrement;
-  text("Spells apply a multiplier to the power of your terrain card; Power-Up applies a 2x, Power-Down applies a 0.5x to your opponnent, and all spells that are", currentX, currentY);
+  text("Spells apply a multiplier to the power of your terrain card: Power-Up applies a 2x, Power-Down applies a 0.5x to your opponnent, and all spells that are", currentX, currentY);
   currentY += yIncrement;
-  text("type-specific apply a 3x", currentX, currentY);
+  text("type-specific apply a 3x.", currentX, currentY);
   currentX -= xIncrement;
   currentY += yIncrement;
   text("When does the game end?", currentX, currentY);
   currentX += xIncrement;
   currentY += yIncrement;
-  text("The game ends when either player has 0 cards in their deck or either player has no terrain cards in hand", currentX, currentY);
+  text("The game ends when either player has 0 cards in their deck or either player has no terrain cards in hand.", currentX, currentY);
   textAlign(CENTER, CENTER);
   returnToMenuFromRules.drawButton();
 }
 
 void draw(){
-  background(0);
+  background(#26C4D1);
+  if(menu || rules){
+    //image(menuBackground, width/2, height/2);
+    background(#106F66);
+  }
+  else{
+    image(gameBackground, width/2, height/2);
+  }
   
   if(!musicLoop.isPlaying()){
     musicLoop.play();
-    musicLoop.amp(0.2);
+    musicLoop.amp(0.15);
   }
   
   if(menu){
@@ -304,10 +333,10 @@ void draw(){
         textSize(60);
         fill(255);
         stroke(255);
-        if(playerScore > compScore){
+        if(playerScore < compScore){
           text("You Win!", width/2, height/2);
         }
-        else if(compScore > playerScore){
+        else if(compScore < playerScore){
           text("You Lose :(", width/2, height/2);
         }
         phaseIndicatorFrameCount++;
@@ -318,61 +347,65 @@ void draw(){
     }
   }
   if(drawTypeChart){
-    image(typeChart, width/2, height/2);
+    pushMatrix();
+    translate(width/2, height/2);
+    scale(1.5);
+    image(typeChart, 0, 0);
+    popMatrix();
   }
   
 }
 
 void initializeFrames(){
-  skyFrames[0] = loadImage("assets/0Sky0001.png");
-  skyFrames[1] = loadImage("assets/0Sky0002.png");
-  skyFrames[2] = loadImage("assets/0Sky0003.png");
-  skyFrames[3] = loadImage("assets/0Sky0004.png");
+  skyFrames[0] = loadImage("assets/Sky0001.png");
+  skyFrames[1] = loadImage("assets/Sky0002.png");
+  skyFrames[2] = loadImage("assets/Sky0003.png");
+  skyFrames[3] = loadImage("assets/Sky0004.png");
   
-  volcFrames[0] = loadImage("assets/0Sky0001.png");
-  volcFrames[1] = loadImage("assets/0Sky0001.png");
-  volcFrames[2] = loadImage("assets/0Sky0001.png");
-  volcFrames[3] = loadImage("assets/0Sky0001.png");
+  volcFrames[0] = loadImage("assets/VOL0001.png");
+  volcFrames[1] = loadImage("assets/VOL0002.png");
+  volcFrames[2] = loadImage("assets/VOL0003.png");
+  volcFrames[3] = loadImage("assets/VOL0004.png");
   
-  oceFrames[0] = loadImage("assets/0Sky0001.png");
-  oceFrames[1] = loadImage("assets/0Sky0001.png");
-  oceFrames[2] = loadImage("assets/0Sky0001.png");
-  oceFrames[3] = loadImage("assets/0Sky0001.png");
+  oceFrames[0] = loadImage("assets/OCE0001.png");
+  oceFrames[1] = loadImage("assets/OCE0002.png");
+  oceFrames[2] = loadImage("assets/OCE0003.png");
+  oceFrames[3] = loadImage("assets/OCE0004.png");
   
-  lanFrames[0] = loadImage("assets/0Sky0001.png");
-  lanFrames[1] = loadImage("assets/0Sky0001.png");
-  lanFrames[2] = loadImage("assets/0Sky0001.png");
-  lanFrames[3] = loadImage("assets/0Sky0001.png");
+  lanFrames[0] = loadImage("assets/LND0001.png");
+  lanFrames[1] = loadImage("assets/LND0002.png");
+  lanFrames[2] = loadImage("assets/LND0003.png");
+  lanFrames[3] = loadImage("assets/LND0004.png");
   
-  forFrames[0] = loadImage("assets/0Sky0001.png");
-  forFrames[1] = loadImage("assets/0Sky0001.png");
-  forFrames[2] = loadImage("assets/0Sky0001.png");
-  forFrames[3] = loadImage("assets/0Sky0001.png");
+  forFrames[0] = loadImage("assets/For0001.png");
+  forFrames[1] = loadImage("assets/For0002.png");
+  forFrames[2] = loadImage("assets/For0003.png");
+  forFrames[3] = loadImage("assets/For0004.png");
   
-  cavFrames[0] = loadImage("assets/0Sky0001.png");
-  cavFrames[1] = loadImage("assets/0Sky0001.png");
-  cavFrames[2] = loadImage("assets/0Sky0001.png");
-  cavFrames[3] = loadImage("assets/0Sky0001.png");
+  cavFrames[0] = loadImage("assets/Cave.png");
+  cavFrames[1] = loadImage("assets/Cave.png");
+  cavFrames[2] = loadImage("assets/Cave.png");
+  cavFrames[3] = loadImage("assets/Cave.png");
   
-  braFrames[0] = loadImage("assets/0Sky0001.png");
-  braFrames[1] = loadImage("assets/0Sky0001.png");
-  braFrames[2] = loadImage("assets/0Sky0001.png");
-  braFrames[3] = loadImage("assets/0Sky0001.png");
+  braFrames[0] = loadImage("assets/BRL0001.png");
+  braFrames[1] = loadImage("assets/BRL0002.png");
+  braFrames[2] = loadImage("assets/BRL0003.png");
+  braFrames[3] = loadImage("assets/BRL0004.png");
   
-  voltFrames[0] = loadImage("assets/0Sky0001.png");
-  voltFrames[1] = loadImage("assets/0Sky0001.png");
-  voltFrames[2] = loadImage("assets/0Sky0001.png");
-  voltFrames[3] = loadImage("assets/0Sky0001.png");
+  voltFrames[0] = loadImage("assets/VLT0001.png");
+  voltFrames[1] = loadImage("assets/VLT0002.png");
+  voltFrames[2] = loadImage("assets/VLT0003.png");
+  voltFrames[3] = loadImage("assets/VLT0004.png");
   
-  neuFrames[0] = loadImage("assets/0Sky0001.png");
-  neuFrames[1] = loadImage("assets/0Sky0001.png");
-  neuFrames[2] = loadImage("assets/0Sky0001.png");
-  neuFrames[3] = loadImage("assets/0Sky0001.png");
+  neuFrames[0] = loadImage("assets/NRO0001.png");
+  neuFrames[1] = loadImage("assets/NRO0002.png");
+  neuFrames[2] = loadImage("assets/NRO0003.png");
+  neuFrames[3] = loadImage("assets/NRO0004.png");
   
-  speFrames[0] = loadImage("assets/0Sky0001.png");
-  speFrames[1] = loadImage("assets/0Sky0001.png");
-  speFrames[2] = loadImage("assets/0Sky0001.png");
-  speFrames[3] = loadImage("assets/0Sky0001.png");
+  speFrames[0] = loadImage("assets/Spell.png");
+  speFrames[1] = loadImage("assets/Spell.png");
+  speFrames[2] = loadImage("assets/Spell.png");
+  speFrames[3] = loadImage("assets/Spell.png");
 }
 
 void initializeDecks(){
@@ -701,16 +734,16 @@ void prepPhase(){
     textSize(60);
     fill(255);
     stroke(255);
-    text("Prep Phase", width/2, height/2);
+    image(prepPhaseImg, width/2, height/2);
     phaseIndicatorFrameCount++;
-    if(phaseIndicatorFrameCount >= 200){
+    if(phaseIndicatorFrameCount >= 100){
       phaseIndicatorFlashed = true;
     }
   }
-  textSize(15);
+  textSize(20);
   fill(255);
   stroke(255);
-  text("Select 3 terrain cards to put on the field. ENTER to finalize", width/2, height - ((handPadY/2) + cardHeight));
+  text("Select 3 terrain cards to put on the field. ENTER to finalize", width/2, height - ((handPadY/2) + cardHeight + 10));
   
   if(!compPrepCardsChosen){
     int rnd = rand.nextInt(10);
@@ -737,20 +770,21 @@ void battlePhase(){
     textSize(60);
     fill(255);
     stroke(255);
-    text("Battle Phase", width/2, height/2);
+    image(battlePhaseImg, width/2, height/2);
     phaseIndicatorFrameCount++;
-    if(phaseIndicatorFrameCount >= 200){
+    if(phaseIndicatorFrameCount >= 100){
       phaseIndicatorFlashed = true;
     }
   }
-  textSize(15);
+  textSize(20);
   fill(255);
   stroke(255);
-  text("Select 1 card to put into Battle. ENTER to finalize", width/2, height - ((handPadY/2) + cardHeight));
+  text("Select 1 card to put into Battle. ENTER to finalize", width/2, height - ((handPadY/2) + cardHeight + 10));
 }
 
 void spellPhase(){
   textAlign(CENTER, CENTER);
+  /*
   if(!phaseIndicatorFlashed){
     textSize(60);
     fill(255);
@@ -761,11 +795,12 @@ void spellPhase(){
       phaseIndicatorFlashed = true;
     }
   }
+  */
   textAlign(CENTER, CENTER);
-  textSize(15);
+  textSize(20);
   fill(255);
   stroke(255);
-  text("Select a spell you'd like to play (if any). ENTER to finalize", width/2, height - ((handPadY/2) + cardHeight));
+  text("Select a spell you'd like to play (if any). ENTER to finalize", width/2, height - ((handPadY/2) + cardHeight + 10));
   
   if(!compSpellCardChosen){
     println("Finding spell");
@@ -847,12 +882,12 @@ void fightPhase(){
     println("Player power: " + playerPower);
     println("Comp power: " + compPower);
     if(playerPower > compPower){
-      playerScore++;
+      playerScore--;
       battleWon.play();
       playerWonBattle = true;
     }
     if(compPower > playerPower){
-      compScore++;
+      compScore--;
       battleLost.play();
       compWonBattle = true;
     }
@@ -877,9 +912,9 @@ void fightPhase(){
       textSize(60);
       fill(255);
       stroke(255);
-      text("Battle Won!", width/2, height/2);
+      image(battleWonImg, width/2, height/2);
       phaseIndicatorFrameCount++;
-      if(phaseIndicatorFrameCount >= 200){
+      if(phaseIndicatorFrameCount >= 100){
         phaseIndicatorFlashed = true;
       }
     }
@@ -889,9 +924,9 @@ void fightPhase(){
         textSize(60);
         fill(255);
         stroke(255);
-        text("Battle Lost!", width/2, height/2);
+        image(battleLostImg, width/2, height/2);
         phaseIndicatorFrameCount++;
-        if(phaseIndicatorFrameCount >= 200){
+        if(phaseIndicatorFrameCount >= 100){
           phaseIndicatorFlashed = true;
         }
       }
@@ -909,10 +944,10 @@ void fightPhase(){
       }
   }
   textAlign(CENTER, CENTER);
-  textSize(15);
+  textSize(20);
   fill(255);
   stroke(255);
-  text("ENTER to continue to next turn", width/2, height - ((handPadY/2) + cardHeight));
+  text("ENTER to continue to next turn", width/2, height - ((handPadY/2) + cardHeight + 10));
 }
 
 float calcScore(Card mon, Type oppType, Card spe, Card powerDown){ //if no power down was played pass a blank 0x spell

@@ -49,8 +49,8 @@ class Card{
   }
   
   void drawCard(){
-    float incrementX = (targetX-x)/20;
-    float incrementY = (targetY-y)/20;
+    float incrementX = (targetX-x)/10;
+    float incrementY = (targetY-y)/10;
     if(show){
       pushMatrix();
       translate(x,y);
@@ -158,13 +158,12 @@ class Card{
       break;
     }
     if(!show){
-      fill(100, 120, 120);
-    }
-    if(type != Type.SKY || !show){
-      rect(0,0,cardWidth,cardHeight);
+      scale(0.25);
+      image(cardBack, 0, 0);
+      scale(4);
     }
     else{
-      scale(0.25);
+      if(type != Type.CAV) scale(0.25);
       image(frames[floor(currentFrame/15)], 0, 0);
       if(currentFrame <= 59){
         currentFrame++;
@@ -172,15 +171,17 @@ class Card{
       if(currentFrame > 59){
         currentFrame = 0;
       }
-      scale(4);
+      if(type != Type.CAV) scale(4);
     }
     
     textAlign(CENTER, CENTER);
-    //stroke(0);
     fill(0);
+    if(type == Type.CAV || type == Type.NEU || type == Type.OCE || type == Type.VOLT){
+      fill(255);
+    }
     if(show){
+      //rotate(PI);
       if(type != Type.SPE){
-        
         textSize(30);
         text(power, 0, 0);
         textSize(20);
