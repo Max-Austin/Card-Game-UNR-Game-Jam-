@@ -19,7 +19,7 @@ Overload - Triple your voltage monsters power
 Psycho Shift - Triple your neuron monsters power
 
 KNOWN BUGS:
-SQUASHED When you place a card in the prep zone, move it back to hand, then back to prep zone, it cannot be selected to be put in battle zone
+index 9 of hand dissapears occassionally
 
 TO DO:
 - Multiplier indicators that show after confirming battle slot selection and before moving to next turn
@@ -69,6 +69,8 @@ PImage[] braFrames = new PImage[4];
 PImage[] voltFrames = new PImage[4];
 PImage[] neuFrames = new PImage[4];
 PImage[] speFrames = new PImage[4];
+PImage[] playerMultiDisplay = new PImage[3];
+PImage[] compMultiDisplay = new PImage[3];
 
 PFont headerFont;
 
@@ -96,13 +98,15 @@ PVector playerSpellPos;
 PVector compSpellPos;
 PVector playerDiscardPos;
 PVector compDiscardPos;
-PVector playerMultiplierPos;
-PVector compMultiplierPos;
+PVector[] playerMultiplierPos = new PVector[3];
+PVector[] compMultiplierPos = new PVector[3];
 
 static enum Type {VOLC, OCE, FOR, LAN, CAV, BRA, SKY, VOLT, NEU, SPE};
 
 DeckStack playerDeck = new DeckStack();
 DeckStack compDeck = new DeckStack();
+DeckStack playerDiscard = new DeckStack();
+DeckStack compDiscard = new DeckStack();
 Hand playerHand = new Hand(true);
 Hand compHand = new Hand(false);
 
@@ -122,6 +126,7 @@ boolean compWonBattle = false;
 boolean menu = true;
 boolean rules = false;
 boolean drawTypeChart = false;
+boolean discardCardsMoved = false;
 
 int phaseIndicatorFrameCount = 0; //counter needs reset
 int playerCardsInPrepZone = 0; //counter needs reset
@@ -134,6 +139,12 @@ int playerCardsInSpellZone = 0; //counter needs reset
 int playerIndexOfCardInSpellZone = -1;
 int compIndexOfCardInSpellZone = -1;
 int totalCardsMoved = 0;
+int playerMultipliersReceived = 0;
+int compMultipliersReceived = 0;
+
+static float multiIndicatorScaleFactor = 0.35;
+static int multiIndicatorWidth = 40;
+static int multiIndicatorHeight = 30;
 
 int playerScore = 0;
 int compScore = 0;
@@ -152,76 +163,22 @@ Random rand = new Random(System.currentTimeMillis());
 void setup(){
   size(1900,1080);
   textAlign(CENTER, CENTER);
+  println(dataPath("") + '/');
   
   playerDeckX = width-100;
   playerDeckY = height-handPadY;
   
-  menuBackground = loadImage("assets/Menu-Background.png");
-  gameBackground = loadImage("assets/Game-Background.png");
-  blankCard = loadImage("assets/blankcard.png");
-  typeChart = loadImage("assets/type-chart.PNG");
-  cardBack = loadImage("assets/CardBack.png");
-  prepPhaseImg = loadImage("assets/PrepPhase.png");
-  battlePhaseImg = loadImage("assets/BattlePhase.png");
-  logo = loadImage("assets/Logo.png");
-  battleWonImg = loadImage("assets/BattleWon.png");
-  battleLostImg = loadImage("assets/BattleLost.png");
-  twoXIndicator = loadImage("assets/2x.png");
-  threeXIndicator = loadImage("assets/3x.png");
-  
-  headerFont = createFont("assets/MetalMania-Regular.ttf", 20);
+  headerFont = createFont("data/MetalMania-Regular.ttf", 20);
   textFont(headerFont);
-  
-  musicLoop = new SoundFile(this, "assets/music-loop.mp3");
-  drawCard = new SoundFile(this, "assets/draw.wav");
-  moveCard = new SoundFile(this, "assets/move-card.wav");
-  battleWon = new SoundFile(this, "assets/battle-won.wav");
-  battleLost = new SoundFile(this, "assets/battle-lost.wav");
   
   imageMode(CENTER);
   rectMode(CENTER);
   
+  initializeImages();
   initializeFrames();
   initializeDecks();
-  
-  playerHandPos[0] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(4*cardWidth+4*handPadX), height-handPadY);
-  playerHandPos[1] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(3*cardWidth+3*handPadX), height-handPadY);
-  playerHandPos[2] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(2*cardWidth+2*handPadX), height-handPadY);
-  playerHandPos[3] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(cardWidth+handPadX), height-handPadY);
-  playerHandPos[4] = new PVector((width/2)-(handPadX/2)-(cardWidth/2), height-handPadY);
-  playerHandPos[5] = new PVector((width/2)+(handPadX/2)+(cardWidth/2), height-handPadY);
-  playerHandPos[6] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(cardWidth+handPadX), height-handPadY);
-  playerHandPos[7] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(2*cardWidth+2*handPadX), height-handPadY);
-  playerHandPos[8] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(3*cardWidth+3*handPadX), height-handPadY);
-  playerHandPos[9] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(4*cardWidth+4*handPadX), height-handPadY);
-  
-  compHandPos[0] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(4*cardWidth+4*handPadX), handPadY);
-  compHandPos[1] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(3*cardWidth+3*handPadX), handPadY);
-  compHandPos[2] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(2*cardWidth+2*handPadX), handPadY);
-  compHandPos[3] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(cardWidth+handPadX), handPadY);
-  compHandPos[4] = new PVector((width/2)-(handPadX/2)-(cardWidth/2), handPadY);
-  compHandPos[5] = new PVector((width/2)+(handPadX/2)+(cardWidth/2), handPadY);
-  compHandPos[6] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(cardWidth+handPadX), handPadY);
-  compHandPos[7] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(2*cardWidth+2*handPadX), handPadY);
-  compHandPos[8] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(3*cardWidth+3*handPadX), handPadY);
-  compHandPos[9] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(4*cardWidth+4*handPadX), handPadY);
-  
-  playerPrepPos[0] = new PVector((width/2) - (cardWidth + handPadX), (height/2)+((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
-  playerPrepPos[1] = new PVector((width/2), (height/2)+((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
-  playerPrepPos[2] = new PVector((width/2) + (cardWidth + handPadX), (height/2)+((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
-  
-  compPrepPos[0] = new PVector((width/2) - (cardWidth + handPadX), (height/2)-((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
-  compPrepPos[1] = new PVector((width/2), (height/2)-((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
-  compPrepPos[2] = new PVector((width/2) + (cardWidth + handPadX), (height/2)-((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
-  
-  playerBattlePos = new PVector((width/2), (height/2) + ((handPadX/2) + cardHeight/2));
-  compBattlePos = new PVector((width/2), (height/2) - ((handPadX/2) + cardHeight/2));
-  
-  playerSpellPos = new PVector(playerBattlePos.x + cardWidth + handPadX, playerBattlePos.y);
-  compSpellPos = new PVector(compBattlePos.x - (cardWidth + handPadX), compBattlePos.y);
-  
-  playerDiscardPos = new PVector(compDeckX, playerDeckY);
-  compDiscardPos = new PVector(playerDeckX, compDeckY+50);
+  initializeVectors();
+  initializeSounds();
   
   returnToMenuFromRules = new Button(width/2, height - (2*menuButtonHeight), menuButtonWidth, menuButtonHeight, "Main Menu");
   returnToMenuFromGame = new Button(width - 150, 50, menuButtonWidth/3, menuButtonHeight/2, "Main Menu");
@@ -301,140 +258,112 @@ void rules(){
   text("When does the game end?", currentX, currentY);
   currentX += xIncrement;
   currentY += yIncrement;
-  text("The game ends when either player has 0 cards in their deck or either player has no terrain cards in hand.", currentX, currentY);
+  text("The game ends when one player earns 10 points, either player has 0 cards in their deck, or either player has no terrain cards in hand.", currentX, currentY);
   textAlign(CENTER, CENTER);
   returnToMenuFromRules.drawButton();
 }
 
-void draw(){
-  background(#26C4D1);
-  if(menu || rules){
-    //image(menuBackground, width/2, height/2);
-    background(#106F66);
-  }
-  else{
-    image(gameBackground, width/2, height/2);
-  }
+
+
+void initializeVectors(){
+  playerHandPos[0] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(4*cardWidth+4*handPadX), height-handPadY);
+  playerHandPos[1] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(3*cardWidth+3*handPadX), height-handPadY);
+  playerHandPos[2] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(2*cardWidth+2*handPadX), height-handPadY);
+  playerHandPos[3] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(cardWidth+handPadX), height-handPadY);
+  playerHandPos[4] = new PVector((width/2)-(handPadX/2)-(cardWidth/2), height-handPadY);
+  playerHandPos[5] = new PVector((width/2)+(handPadX/2)+(cardWidth/2), height-handPadY);
+  playerHandPos[6] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(cardWidth+handPadX), height-handPadY);
+  playerHandPos[7] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(2*cardWidth+2*handPadX), height-handPadY);
+  playerHandPos[8] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(3*cardWidth+3*handPadX), height-handPadY);
+  playerHandPos[9] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(4*cardWidth+4*handPadX), height-handPadY);
   
-  if(!musicLoop.isPlaying()){
-    //musicLoop.play();
-    musicLoop.amp(0.15);
-  }
+  compHandPos[0] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(4*cardWidth+4*handPadX), handPadY);
+  compHandPos[1] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(3*cardWidth+3*handPadX), handPadY);
+  compHandPos[2] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(2*cardWidth+2*handPadX), handPadY);
+  compHandPos[3] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(cardWidth+handPadX), handPadY);
+  compHandPos[4] = new PVector((width/2)-(handPadX/2)-(cardWidth/2), handPadY);
+  compHandPos[5] = new PVector((width/2)+(handPadX/2)+(cardWidth/2), handPadY);
+  compHandPos[6] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(cardWidth+handPadX), handPadY);
+  compHandPos[7] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(2*cardWidth+2*handPadX), handPadY);
+  compHandPos[8] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(3*cardWidth+3*handPadX), handPadY);
+  compHandPos[9] = new PVector((width/2)+(handPadX/2)+(cardWidth/2)+(4*cardWidth+4*handPadX), handPadY);
   
-  if(menu){
-    menu();
-  }
-  if(rules){
-    rules();
-  }
-  if(!menu && !rules){
-    returnToMenuFromGame.drawButton();
-    if(!gameOver){
-      playerDeck.drawDeck();
-      compDeck.drawDeck();
-      playerHand.drawHand();
-      compHand.drawHand();
-      
-      drawScores();
-    
-      if(!initialHandsDrawn){ 
-        drawFullHands();
-        if(compDeck.top == -1 || playerDeck.top == -1){
-          gameOver = true;
-        }
-      }
-    
-      if(prepPhase){
-        prepPhase();
-      }
-      else if(battlePhase){
-        battlePhase();
-      }
-      else if(spellPhase){
-        spellPhase();
-      }
-      else if(fightPhase){
-        fightPhase();
-      }
-    }
-    else{
-      if(phaseIndicatorFrameCount <= 1000){
-        textSize(60);
-        fill(255);
-        stroke(255);
-        if(playerScore > compScore){
-          text("You Win!", width/2, height/2);
-        }
-        else if(compScore > playerScore){
-          text("You Lose :(", width/2, height/2);
-        }
-        phaseIndicatorFrameCount++;
-      }
-      else{
-        resetGame();
-      }
-    }
-  }
-  if(drawTypeChart){
-    pushMatrix();
-    translate(width/2, height/2);
-    scale(1.5);
-    image(typeChart, 0, 0);
-    popMatrix();
-  }
+  playerPrepPos[0] = new PVector((width/2) - (cardWidth + handPadX), (height/2)+((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
+  playerPrepPos[1] = new PVector((width/2), (height/2)+((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
+  playerPrepPos[2] = new PVector((width/2) + (cardWidth + handPadX), (height/2)+((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
+  
+  compPrepPos[0] = new PVector((width/2) - (cardWidth + handPadX), (height/2)-((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
+  compPrepPos[1] = new PVector((width/2), (height/2)-((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
+  compPrepPos[2] = new PVector((width/2) + (cardWidth + handPadX), (height/2)-((handPadX/2) + (cardHeight/2) + cardHeight + handPadX));
+  
+  playerBattlePos = new PVector((width/2), (height/2) + ((handPadX/2) + cardHeight/2));
+  compBattlePos = new PVector((width/2), (height/2) - ((handPadX/2) + cardHeight/2));
+  
+  playerSpellPos = new PVector(playerBattlePos.x + cardWidth + handPadX, playerBattlePos.y);
+  compSpellPos = new PVector(compBattlePos.x - (cardWidth + handPadX), compBattlePos.y);
+  
+  playerDiscardPos = new PVector(compDeckX, playerDeckY);
+  compDiscardPos = new PVector(playerDeckX, compDeckY+50);
+  
+  playerMultiplierPos[0] = new PVector(playerBattlePos.x - cardWidth, playerBattlePos.y);
+  playerMultiplierPos[1] = new PVector(playerMultiplierPos[0].x - (multiIndicatorWidth) - handPadX, playerBattlePos.y);
+  playerMultiplierPos[2] = new PVector(playerMultiplierPos[1].x - (multiIndicatorWidth) - handPadX, playerBattlePos.y);
+  compMultiplierPos[0] = new PVector(compBattlePos.x + cardWidth, compBattlePos.y);
+  compMultiplierPos[1] = new PVector(compMultiplierPos[0].x + (multiIndicatorWidth) + handPadX, compBattlePos.y);
+  compMultiplierPos[2] = new PVector(compMultiplierPos[1].x + (multiIndicatorWidth) + handPadX, compBattlePos.y);
   
 }
 
 void initializeFrames(){
-  skyFrames[0] = loadImage("assets/Sky0001.png");
-  skyFrames[1] = loadImage("assets/Sky0002.png");
-  skyFrames[2] = loadImage("assets/Sky0003.png");
-  skyFrames[3] = loadImage("assets/Sky0004.png");
+  skyFrames[0] = loadImage("data/Sky0001.png");
+  skyFrames[1] = loadImage("data/Sky0002.png");
+  skyFrames[2] = loadImage("data/Sky0003.png");
+  skyFrames[3] = loadImage("data/Sky0004.png");
   
-  volcFrames[0] = loadImage("assets/VOL0001.png");
-  volcFrames[1] = loadImage("assets/VOL0002.png");
-  volcFrames[2] = loadImage("assets/VOL0003.png");
-  volcFrames[3] = loadImage("assets/VOL0004.png");
+  volcFrames[0] = loadImage("data/VOL0001.png");
+  volcFrames[1] = loadImage("data/VOL0002.png");
+  volcFrames[2] = loadImage("data/VOL0003.png");
+  volcFrames[3] = loadImage("data/VOL0004.png");
   
-  oceFrames[0] = loadImage("assets/OCE0001.png");
-  oceFrames[1] = loadImage("assets/OCE0002.png");
-  oceFrames[2] = loadImage("assets/OCE0003.png");
-  oceFrames[3] = loadImage("assets/OCE0004.png");
+  oceFrames[0] = loadImage("data/OCE0001.png");
+  oceFrames[1] = loadImage("data/OCE0002.png");
+  oceFrames[2] = loadImage("data/OCE0003.png");
+  oceFrames[3] = loadImage("data/OCE0004.png");
   
-  lanFrames[0] = loadImage("assets/LND0001.png");
-  lanFrames[1] = loadImage("assets/LND0002.png");
-  lanFrames[2] = loadImage("assets/LND0003.png");
-  lanFrames[3] = loadImage("assets/LND0004.png");
+  lanFrames[0] = loadImage("data/LND0001.png");
+  lanFrames[1] = loadImage("data/LND0002.png");
+  lanFrames[2] = loadImage("data/LND0003.png");
+  lanFrames[3] = loadImage("data/LND0004.png");
   
-  forFrames[0] = loadImage("assets/For0001.png");
-  forFrames[1] = loadImage("assets/For0002.png");
-  forFrames[2] = loadImage("assets/For0003.png");
-  forFrames[3] = loadImage("assets/For0004.png");
+  forFrames[0] = loadImage("data/For0001.png");
+  forFrames[1] = loadImage("data/For0002.png");
+  forFrames[2] = loadImage("data/For0003.png");
+  forFrames[3] = loadImage("data/For0004.png");
   
-  cavFrames[0] = loadImage("assets/Cave.png");
-  cavFrames[1] = loadImage("assets/Cave.png");
-  cavFrames[2] = loadImage("assets/Cave.png");
-  cavFrames[3] = loadImage("assets/Cave.png");
+  cavFrames[0] = loadImage("data/Cave.png");
+  cavFrames[1] = loadImage("data/Cave.png");
+  cavFrames[2] = loadImage("data/Cave.png");
+  cavFrames[3] = loadImage("data/Cave.png");
   
-  braFrames[0] = loadImage("assets/BRL0001.png");
-  braFrames[1] = loadImage("assets/BRL0002.png");
-  braFrames[2] = loadImage("assets/BRL0003.png");
-  braFrames[3] = loadImage("assets/BRL0004.png");
+  braFrames[0] = loadImage("data/BRL0001.png");
+  braFrames[1] = loadImage("data/BRL0002.png");
+  braFrames[2] = loadImage("data/BRL0003.png");
+  braFrames[3] = loadImage("data/BRL0004.png");
   
-  voltFrames[0] = loadImage("assets/VLT0001.png");
-  voltFrames[1] = loadImage("assets/VLT0002.png");
-  voltFrames[2] = loadImage("assets/VLT0003.png");
-  voltFrames[3] = loadImage("assets/VLT0004.png");
+  voltFrames[0] = loadImage("data/VLT0001.png");
+  voltFrames[1] = loadImage("data/VLT0002.png");
+  voltFrames[2] = loadImage("data/VLT0003.png");
+  voltFrames[3] = loadImage("data/VLT0004.png");
   
-  neuFrames[0] = loadImage("assets/NRO0001.png");
-  neuFrames[1] = loadImage("assets/NRO0002.png");
-  neuFrames[2] = loadImage("assets/NRO0003.png");
-  neuFrames[3] = loadImage("assets/NRO0004.png");
+  neuFrames[0] = loadImage("data/NRO0001.png");
+  neuFrames[1] = loadImage("data/NRO0002.png");
+  neuFrames[2] = loadImage("data/NRO0003.png");
+  neuFrames[3] = loadImage("data/NRO0004.png");
   
-  speFrames[0] = loadImage("assets/Spell.png");
-  speFrames[1] = loadImage("assets/Spell.png");
-  speFrames[2] = loadImage("assets/Spell.png");
-  speFrames[3] = loadImage("assets/Spell.png");
+  speFrames[0] = loadImage("data/Spell.png");
+  speFrames[1] = loadImage("data/Spell.png");
+  speFrames[2] = loadImage("data/Spell.png");
+  speFrames[3] = loadImage("data/Spell.png");
 }
 
 void initializeDecks(){
@@ -520,6 +449,112 @@ void initializeDecks(){
   
   playerDeck.shuffleDeck();
   compDeck.shuffleDeck();
+}
+
+void initializeImages(){
+  menuBackground = loadImage("data/Menu-Background.png");
+  gameBackground = loadImage("data/Game-Background.png");
+  blankCard = loadImage("data/blankcard.png");
+  typeChart = loadImage("data/type-chart.PNG");
+  cardBack = loadImage("data/CardBack.png");
+  prepPhaseImg = loadImage("data/PrepPhase.png");
+  battlePhaseImg = loadImage("data/BattlePhase.png");
+  logo = loadImage("data/Logo.png");
+  battleWonImg = loadImage("data/BattleWon.png");
+  battleLostImg = loadImage("data/BattleLost.png");
+  twoXIndicator = loadImage("data/2x.png");
+  threeXIndicator = loadImage("data/3x.png");
+}
+
+void initializeSounds(){
+  musicLoop = new SoundFile(this, "data/music-loop.mp3");
+  drawCard = new SoundFile(this, "data/draw.wav");
+  moveCard = new SoundFile(this, "data/move-card.wav");
+  battleWon = new SoundFile(this, "data/battle-won.wav");
+  battleLost = new SoundFile(this, "data/battle-lost.wav");
+}
+
+void draw(){
+  background(#26C4D1);
+  
+  if(menu || rules){
+    //image(menuBackground, width/2, height/2);
+    background(#106F66);
+  }
+  else{
+    image(gameBackground, width/2, height/2);
+  }
+  
+  if(!musicLoop.isPlaying()){
+    musicLoop.play();
+    musicLoop.amp(0.15);
+  }
+  
+  if(menu){
+    menu();
+  }
+  if(rules){
+    rules();
+  }
+  if(!menu && !rules){
+    returnToMenuFromGame.drawButton();
+    if(!gameOver){
+      playerDeck.drawDeck();
+      compDeck.drawDeck();
+      playerHand.drawHand();
+      compHand.drawHand();
+      playerDiscard.drawDeck();
+      compDiscard.drawDeck();
+      drawScores();
+    
+      if(!initialHandsDrawn){ 
+        drawFullHands();
+        if(compDeck.top == -1 || playerDeck.top == -1){
+          gameOver = true;
+        }
+      }
+      if(prepPhase){
+        //playerDiscard.setPosOfAll(playerDiscardPos);
+        //compDiscard.setPosOfAll(compDiscardPos);
+        prepPhase();
+      }
+      else if(battlePhase){
+        battlePhase();
+      }
+      else if(spellPhase){
+        spellPhase();
+      }
+      else if(fightPhase){
+        fightPhase();
+        displayMultipliers();
+      }
+    }
+    else{
+      if(phaseIndicatorFrameCount <= 1000){
+        textSize(60);
+        fill(255);
+        stroke(255);
+        if(playerScore > compScore){
+          text("You Win!", width/2, height/2);
+        }
+        else if(compScore > playerScore){
+          text("You Lose :(", width/2, height/2);
+        }
+        phaseIndicatorFrameCount++;
+      }
+      else{
+        resetGame();
+      }
+    }
+  }
+  if(drawTypeChart){
+    pushMatrix();
+    translate(width/2, height/2);
+    scale(1.5);
+    image(typeChart, 0, 0);
+    popMatrix();
+  }
+  
 }
 
 void mouseReleased(){
@@ -784,6 +819,13 @@ void prepPhase(){
       phaseIndicatorFlashed = true;
     }
   }
+  if(!discardCardsMoved){
+    playerDiscard.printStack();
+    compDiscard.printStack();
+    playerDiscard.setPosOfAll(playerDiscardPos);
+    compDiscard.setPosOfAll(compDiscardPos);
+    discardCardsMoved = true;
+  }
   textSize(20);
   fill(255);
   stroke(255);
@@ -879,55 +921,55 @@ void fightPhase(){
     if(compIndexOfCardInSpellZone != -1 && playerIndexOfCardInSpellZone != -1){
       //niether player has a power down
       if(compHand.cards[compIndexOfCardInSpellZone].name != "Power-Down" && playerHand.cards[playerIndexOfCardInSpellZone].name != "Power-Down"){
-        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, playerHand.cards[playerIndexOfCardInSpellZone], blank0Mult);
-        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, compHand.cards[compIndexOfCardInSpellZone], blank0Mult);
+        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, playerHand.cards[playerIndexOfCardInSpellZone], blank0Mult, true);
+        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, compHand.cards[compIndexOfCardInSpellZone], blank0Mult, false);
       }
       //comp has power-down player doesn't
       if(compHand.cards[compIndexOfCardInSpellZone].name == "Power-Down" && playerHand.cards[playerIndexOfCardInSpellZone].name != "Power-Down"){
-        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, playerHand.cards[playerIndexOfCardInSpellZone], compHand.cards[compIndexOfCardInSpellZone]);
-        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, blank0Mult);
+        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, playerHand.cards[playerIndexOfCardInSpellZone], compHand.cards[compIndexOfCardInSpellZone], true);
+        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, blank0Mult, false);
       }
       //comp doesn't have power down and player does
       if(playerHand.cards[playerIndexOfCardInSpellZone].name == "Power-Down" && compHand.cards[compIndexOfCardInSpellZone].name != "Power-Down"){
-        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, blank0Mult);
-        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, compHand.cards[compIndexOfCardInSpellZone], playerHand.cards[playerIndexOfCardInSpellZone]);
+        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, blank0Mult, true);
+        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, compHand.cards[compIndexOfCardInSpellZone], playerHand.cards[playerIndexOfCardInSpellZone], false);
       }
       //both players have a power down
       if(playerHand.cards[playerIndexOfCardInSpellZone].name == "Power-Down" && compHand.cards[compIndexOfCardInSpellZone].name == "Power-Down"){
-        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, compHand.cards[compIndexOfCardInSpellZone]);
-        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, playerHand.cards[playerIndexOfCardInSpellZone]);
+        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, compHand.cards[compIndexOfCardInSpellZone], true);
+        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, playerHand.cards[playerIndexOfCardInSpellZone], false);
       }
     }
     //comp has no spell while player does
     else if(compIndexOfCardInSpellZone == -1 && playerIndexOfCardInSpellZone != -1){
       //player has a power down
       if(playerHand.cards[playerIndexOfCardInSpellZone].name == "Power-Down"){
-        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, blank0Mult);
-        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, playerHand.cards[playerIndexOfCardInSpellZone]);
+        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, blank0Mult, true);
+        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, playerHand.cards[playerIndexOfCardInSpellZone], false);
       }
       //neither have a power down
       else{
-        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, playerHand.cards[playerIndexOfCardInSpellZone], blank0Mult);
-        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, blank0Mult);
+        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, playerHand.cards[playerIndexOfCardInSpellZone], blank0Mult, true);
+        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, blank0Mult, false);
       }
     }
     //comp has a spell and player doesn't
     else if(compIndexOfCardInSpellZone != -1 && playerIndexOfCardInSpellZone == -1){
       //comp has a power down
       if(compHand.cards[compIndexOfCardInSpellZone].name == "Power-Down"){
-        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, compHand.cards[compIndexOfCardInSpellZone]);
-        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, blank0Mult);
+        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, compHand.cards[compIndexOfCardInSpellZone], true);
+        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, blank0Mult, false);
       }
       //neither have a power down
       else{
-        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, blank0Mult);
-        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, compHand.cards[compIndexOfCardInSpellZone], blank0Mult);
+        playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, blank0Mult, true);
+        compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, compHand.cards[compIndexOfCardInSpellZone], blank0Mult, false);
       }
     }
     //neither has a spell
     else if(compIndexOfCardInSpellZone == -1 && playerIndexOfCardInSpellZone == -1){
-      playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, blank0Mult);
-      compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, blank0Mult);
+      playerPower = calcScore(playerHand.cards[playerIndexOfCardInBattleZone], compType, blank0Mult, blank0Mult, true);
+      compPower = calcScore(compHand.cards[compIndexOfCardInBattleZone], playerType, blank0Mult, blank0Mult, false);
     }
     println("Player power: " + playerPower);
     println("Comp power: " + compPower);
@@ -941,16 +983,20 @@ void fightPhase(){
       battleLost.play();
       compWonBattle = true;
     }
-    playerHand.cards[playerIndexOfCardInBattleZone].setPos(playerDiscardPos.x, playerDiscardPos.y);
+    if(compScore == 10 || playerScore == 10){
+      gameOver = true;
+    }
+    
+    playerDiscard.push(playerHand.cards[playerIndexOfCardInBattleZone]);
     playerHand.removeCardFromHand(playerIndexOfCardInBattleZone);
-    compHand.cards[compIndexOfCardInBattleZone].setPos(compDiscardPos.x, compDiscardPos.y);
+    compDiscard.push(compHand.cards[compIndexOfCardInBattleZone]);
     compHand.removeCardFromHand(compIndexOfCardInBattleZone);
     if(playerIndexOfCardInSpellZone != -1){
-      playerHand.cards[playerIndexOfCardInSpellZone].setPos(playerDiscardPos.x, playerDiscardPos.y);
+      playerDiscard.push(playerHand.cards[playerIndexOfCardInSpellZone]);
       playerHand.removeCardFromHand(playerIndexOfCardInSpellZone);
     }
     if(compIndexOfCardInSpellZone != -1){
-      compHand.cards[compIndexOfCardInSpellZone].setPos(compDiscardPos.x, compDiscardPos.y);
+      compDiscard.push(compHand.cards[compIndexOfCardInSpellZone]);
       compHand.removeCardFromHand(compIndexOfCardInSpellZone);
     }
     combatCalced = true;
@@ -959,9 +1005,6 @@ void fightPhase(){
   }
   if(playerWonBattle){
     if(!phaseIndicatorFlashed){
-      textSize(60);
-      fill(255);
-      stroke(255);
       image(battleWonImg, width/2, height/2);
       phaseIndicatorFrameCount++;
       if(phaseIndicatorFrameCount >= 100){
@@ -971,9 +1014,6 @@ void fightPhase(){
   }
   if(compWonBattle){
     if(!phaseIndicatorFlashed){
-        textSize(60);
-        fill(255);
-        stroke(255);
         image(battleLostImg, width/2, height/2);
         phaseIndicatorFrameCount++;
         if(phaseIndicatorFrameCount >= 100){
@@ -1000,67 +1040,113 @@ void fightPhase(){
   text("ENTER to continue to next turn", width/2, height - ((handPadY/2) + cardHeight + 10));
 }
 
-float calcScore(Card mon, Type oppType, Card spe, Card powerDown){ //if no power down was played pass a blank 0x spell
+float calcScore(Card mon, Type oppType, Card spe, Card powerDown, boolean playerCalc){ //if no power down was played pass a blank 0x spell
   float p = mon.power;
+  boolean typeMultiFound = false;
   print(p + " * ");
   switch(mon.type){
     case VOLC:
     if(oppType == Type.FOR || oppType == Type.CAV){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     case OCE:
     if(oppType == Type.VOLC || oppType == Type.LAN){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     case FOR:
     if(oppType == Type.OCE || oppType == Type.LAN || oppType == Type.VOLT){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     case LAN:
     if(oppType == Type.VOLC || oppType == Type.CAV || oppType == Type.VOLT){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     case CAV:
     if(oppType == Type.FOR || oppType == Type.VOLT || oppType == Type.NEU){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     case BRA:
     if(oppType == Type.LAN || oppType == Type.CAV){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     case SKY:
     if(oppType == Type.FOR || oppType == Type.BRA){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     case VOLT:
     if(oppType == Type.OCE || oppType == Type.SKY){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     case NEU:
     if(oppType == Type.BRA){
       p *=2;
+      typeMultiFound = true;
       print("2");
     }
     break;
     default:
     
     break;
+  }
+  if(playerCalc){
+    if(typeMultiFound){
+      playerMultiDisplay[playerMultipliersReceived] = twoXIndicator;
+      playerMultipliersReceived++;
+    }
+    if(spe.multiplier == 2){
+      playerMultiDisplay[playerMultipliersReceived] = twoXIndicator;
+      playerMultipliersReceived++;
+    }
+    else if(spe.multiplier == 3){
+      playerMultiDisplay[playerMultipliersReceived] = threeXIndicator;
+      playerMultipliersReceived++;
+    }
+    if(powerDown.multiplier == 0.5){
+      playerMultiDisplay[playerMultipliersReceived] = blankCard;
+      playerMultipliersReceived++;
+    }
+  }
+  if(!playerCalc){
+    if(typeMultiFound){
+      compMultiDisplay[compMultipliersReceived] = twoXIndicator;
+      compMultipliersReceived++;
+    }
+    if(spe.multiplier == 2){
+      compMultiDisplay[compMultipliersReceived] = twoXIndicator;
+      compMultipliersReceived++;
+    }
+    else if(spe.multiplier == 3){
+      compMultiDisplay[compMultipliersReceived] = threeXIndicator;
+      compMultipliersReceived++;
+    }
+    if(powerDown.multiplier == 0.5){
+      compMultiDisplay[compMultipliersReceived] = blankCard;
+      compMultipliersReceived++;
+    }
   }
   print(" * ");
   p *= spe.multiplier;
@@ -1070,6 +1156,23 @@ float calcScore(Card mon, Type oppType, Card spe, Card powerDown){ //if no power
   println(powerDown.multiplier);
   
   return p;
+}
+
+void displayMultipliers(){
+  for(int i = 0; i < playerMultipliersReceived; i++){
+    displayMultiplier(playerMultiDisplay[i], playerMultiplierPos[i]);
+  }
+  for(int i = 0; i < compMultipliersReceived; i++){
+    displayMultiplier(compMultiDisplay[i], compMultiplierPos[i]);
+  }
+}
+
+void displayMultiplier(PImage img, PVector pos){
+  pushMatrix();
+  translate(pos.x, pos.y);
+  scale(multiIndicatorScaleFactor);
+  image(img, 0, 0);
+  popMatrix();
 }
 
 boolean checkValidSpell(Card mon, Card spe){
@@ -1193,6 +1296,11 @@ void resetControllers(){
   compSpellCardChosen = false;
   fightPhase = false;
   combatCalced = false;
+  discardCardsMoved = false;
+  playerMultiDisplay = new PImage[3];
+  compMultiDisplay = new PImage[3];
+  playerMultipliersReceived = 0;
+  compMultipliersReceived = 0;
   
   phaseIndicatorFrameCount = 0; //counter needs reset
   playerCardsInPrepZone = 0; //counter needs reset
@@ -1222,8 +1330,12 @@ void resetGame(){
   playerScore = 0;
   compScore = 0;
   menu = true;
+  playerDiscard = new DeckStack();
+  compDiscard = new DeckStack();
   while(playerHand.handSize > -1 && compHand.handSize > -1){
     playerHand.removeCardFromHand(playerHand.handSize);
     compHand.removeCardFromHand(compHand.handSize);
   }
+  playerDeck.shuffleDeck();
+  compDeck.shuffleDeck();
 }
