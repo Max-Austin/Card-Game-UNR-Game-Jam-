@@ -21,4 +21,4 @@ The rules can also be found on the main menu.
   ### Spell Multipliers:
   Spells apply a multiplier to the power of your terrain card: Power-Up applies a 2x, Power-Down applies a 0.5x to your opponnent, and all spells that are type-specific apply a 3x.
   ### When does the game end?
-  The game ends when either player has 0 cards in their deck or either player has no terrain cards in hand.
+  The game ends when one player earns 10 points, either player has 0 cards in their deck, or either player has no terrain cards in hand.

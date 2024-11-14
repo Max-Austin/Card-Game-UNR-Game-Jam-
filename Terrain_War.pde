@@ -8,7 +8,7 @@ Spells are:
 Counterspell - Cancel the last spell your opponent played
 2x Power-Up - Double your monster's power
 2x Power-Down - Halve Your oponents monsters power
-Conflagerate - Triple your volcano monsters power
+Incinerate - Triple your volcano monsters power
 Tsunami - Triple your ocean monsters power
 Overgrowth - Triple your forest monsters power
 Earthquake - Triple your land monsters power
@@ -19,10 +19,8 @@ Overload - Triple your voltage monsters power
 Psycho Shift - Triple your neuron monsters power
 
 KNOWN BUGS:
-index 9 of hand dissapears occassionally
 
 TO DO:
-- Multiplier indicators that show after confirming battle slot selection and before moving to next turn
 - High Scores
   - Should have a category for each level
 - Levels
@@ -33,7 +31,6 @@ TO DO:
 - Display discard piles
   - A way to see all cards in discard pile
 - Button Click sound
-- Write ReadMe
 - Make opponent smarter
 
 */
@@ -72,21 +69,24 @@ PImage[] speFrames = new PImage[4];
 PImage[] playerMultiDisplay = new PImage[3];
 PImage[] compMultiDisplay = new PImage[3];
 
+color rulesHighlight = #AB40C1;
+
 PFont headerFont;
 
 import java.util.*;
-static int deckSize = 50;
-static int maxHandSize = 10;
+static final int deckSize = 50;
+static final int maxHandSize = 10;
 
 int playerDeckX;
 int playerDeckY;
-static int compDeckX = 100;
-static int compDeckY = 100;
-static int cardWidth = 82;
-static int cardHeight = 128;
-static int handPadX = 10;
-static int handPadY = 100;
-static int menuOffSetY = 150;
+static final int compDeckX = 100;
+static final int compDeckY = 100;
+static final int cardWidth = 82;
+static final int cardHeight = 128;
+static final int handPadX = 10;
+static final int handPadY = 100;
+static final int menuOffSetY = 150;
+static final int pointsNeededToWin = 10;
 
 PVector[] playerHandPos = new PVector[maxHandSize];
 PVector[] compHandPos = new PVector[maxHandSize];
@@ -110,6 +110,7 @@ DeckStack compDiscard = new DeckStack();
 Hand playerHand = new Hand(true);
 Hand compHand = new Hand(false);
 
+boolean firstHandsDrawn = false;
 boolean initialHandsDrawn = false;
 boolean prepPhase = false;
 boolean battlePhase = false;
@@ -161,9 +162,10 @@ static int menuButtonPadY = 30;
 Random rand = new Random(System.currentTimeMillis());
 
 void setup(){
-  size(1900,1080);
+  //size(1900,1080);
+  fullScreen();
   textAlign(CENTER, CENTER);
-  println(dataPath("") + '/');
+  //println(dataPath("") + '/');
   
   playerDeckX = width-100;
   playerDeckY = height-handPadY;
@@ -180,90 +182,12 @@ void setup(){
   initializeVectors();
   initializeSounds();
   
-  returnToMenuFromRules = new Button(width/2, height - (2*menuButtonHeight), menuButtonWidth, menuButtonHeight, "Main Menu");
+  returnToMenuFromRules = new Button(width/2, height - (menuButtonHeight), menuButtonWidth, menuButtonHeight, "Main Menu");
   returnToMenuFromGame = new Button(width - 150, 50, menuButtonWidth/3, menuButtonHeight/2, "Main Menu");
   menuButtons[0] = new Button(width/2, (height/2) + menuOffSetY - (menuButtonHeight + (menuButtonPadY/2)), menuButtonWidth, menuButtonHeight, "Start Game");
   menuButtons[1] = new Button(width/2, (height/2) + menuOffSetY, menuButtonWidth, menuButtonHeight, "Rules");
   menuButtons[2] = new Button(width/2, (height/2) + (menuButtonHeight + (menuButtonPadY/2) + menuOffSetY), menuButtonWidth, menuButtonHeight, "High Scores (Under Construction)");
 }
-
-void menu(){
-  fill(255);
-  textSize(90);
-  textAlign(CENTER, CENTER);
-  pushMatrix();
-  translate(width/2, 200+menuOffSetY);
-  scale(0.75);
-  image(logo, 0, 0);
-  popMatrix();
-  for(int i = 0; i < numMenuButtons; i++){
-    menuButtons[i].drawButton();
-  }
-}
-void rules(){
-  int currentX = 50;
-  int currentY = 30;
-  int yIncrement = 40;
-  int xIncrement = 40;
-  fill(255);
-  textSize(50);
-  text("RULES", width/2, currentY);
-  currentY += yIncrement;
-  textSize(25);
-  textAlign(LEFT, TOP);
-  text("Who am I playing against? A computer that makes purely random decisions.", currentX, currentY);
-  currentY += yIncrement;
-  text("Card Types:", currentX, currentY);
-  currentY += yIncrement;
-  currentX += xIncrement;
-  text("Terrain: Used to battle, each terrain card has a type and power level indicated on the card.", currentX, currentY);
-  currentY += yIncrement;
-  text("Spell: Used to enhance terrain cards.", currentX, currentY);
-  currentX -= xIncrement;
-  currentY += yIncrement;
-  text("Type Matchups:", currentX, currentY);
-  currentY += yIncrement;
-  currentX += xIncrement;
-  text("Some types of terrain cards are better against others. Hold TAB at any time to show the typing cheat-sheet.", currentX, currentY);
-  currentX -= xIncrement;
-  currentY += yIncrement;
-  text("Prep Phase:", currentX, currentY);
-  currentX += xIncrement;
-  currentY += yIncrement;
-  text("Prepare at most 3 terrain cards to potentially do battle, and, after finalizing your choice, your opponents' prepped cards are revealed.", currentX, currentY);
-  currentX -= xIncrement;
-  currentY += yIncrement;
-  text("Battle Phase:", currentX, currentY);
-  currentX += xIncrement;
-  currentY += yIncrement;
-  text("Pick one card that will face off against your opponent's choice. After finalizing your choice your opponent's choice is revealed", currentX, currentY);
-  currentX -= xIncrement;
-  currentY += yIncrement;
-  text("Spell Phase:", currentX, currentY);
-  currentX += xIncrement;
-  currentY += yIncrement;
-  text("Pick a spell to enhance your terrain cards. Some spells can only be played when you have a certain type of terrain card battling. For example, the", currentX, currentY);
-  currentY += yIncrement;
-  text("spell Overload can only be played while you have a Voltage type terrain in battle.", currentX, currentY);
-  currentX -= xIncrement;
-  currentY += yIncrement;
-  text("Spell Multipliers:", currentX, currentY);
-  currentX += xIncrement;
-  currentY += yIncrement;
-  text("Spells apply a multiplier to the power of your terrain card: Power-Up applies a 2x, Power-Down applies a 0.5x to your opponnent, and all spells that are", currentX, currentY);
-  currentY += yIncrement;
-  text("type-specific apply a 3x.", currentX, currentY);
-  currentX -= xIncrement;
-  currentY += yIncrement;
-  text("When does the game end?", currentX, currentY);
-  currentX += xIncrement;
-  currentY += yIncrement;
-  text("The game ends when one player earns 10 points, either player has 0 cards in their deck, or either player has no terrain cards in hand.", currentX, currentY);
-  textAlign(CENTER, CENTER);
-  returnToMenuFromRules.drawButton();
-}
-
-
 
 void initializeVectors(){
   playerHandPos[0] = new PVector((width/2)-(handPadX/2)-(cardWidth/2)-(4*cardWidth+4*handPadX), height-handPadY);
@@ -428,8 +352,8 @@ void initializeDecks(){
   compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Power-Down", 0.5));
   playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Power-Down", 0.5));
   compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Power-Down", 0.5));
-  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Conflagerate", 3));
-  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Conflagerate", 3));
+  playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Incinerate", 3));
+  compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Incinerate", 3));
   playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Tsunami", 3));
   compDeck.push(new Card(compDeckX, compDeckY, speFrames, false, Type.SPE, 0, "Tsunami", 3));
   playerDeck.push(new Card(playerDeckX, playerDeckY, speFrames, false, Type.SPE, 0, "Overgrowth", 3));
@@ -454,6 +378,7 @@ void initializeDecks(){
 void initializeImages(){
   menuBackground = loadImage("data/Menu-Background.png");
   gameBackground = loadImage("data/Game-Background.png");
+  gameBackground.resize(width, height);
   blankCard = loadImage("data/blankcard.png");
   typeChart = loadImage("data/type-chart.PNG");
   cardBack = loadImage("data/CardBack.png");
@@ -508,14 +433,15 @@ void draw(){
       drawScores();
     
       if(!initialHandsDrawn){ 
+        //println("DRAW CALL: Player hand size: " + playerHand.handSize + "     Comp hand size: " + compHand.handSize);
         drawFullHands();
         if(compDeck.top == -1 || playerDeck.top == -1){
           gameOver = true;
+          println("Found game over");
         }
       }
       if(prepPhase){
-        //playerDiscard.setPosOfAll(playerDiscardPos);
-        //compDiscard.setPosOfAll(compDiscardPos);
+        firstHandsDrawn = true;
         prepPhase();
       }
       else if(battlePhase){
@@ -529,7 +455,7 @@ void draw(){
         displayMultipliers();
       }
     }
-    else{
+    if(gameOver){
       if(phaseIndicatorFrameCount <= 1000){
         textSize(60);
         fill(255);
@@ -641,7 +567,7 @@ void mouseReleased(){
       }
       if(battlePhase){
         if(indexOfCardClicked != -1 && playerCardsInBattleZone != 1 && !playerHand.cards[indexOfCardClicked].inBattleZone && playerHand.cards[indexOfCardClicked].inPrepZone){
-          println("SHOULD SEE THIS ONCE");
+          //println("SHOULD SEE THIS ONCE");
           playerHand.cards[indexOfCardClicked].setPos(playerBattlePos.x, playerBattlePos.y);
           playerHand.cards[indexOfCardClicked].inBattleZone = true;
           playerIndexOfCardInBattleZone = indexOfCardClicked;
@@ -766,40 +692,143 @@ Card[] shuffle(Card[] c, int numItems){
 }
 
 void drawFullHands(){
+  //println("draw full hands call " + playerHand.handSize, compHand.handSize);
   if(playerHand.getHandSize() != 9){
     playerHand.addCardToHand(playerDeck.peek());
     playerDeck.pop();
+    //println("Drawing to player hand, hand size: " + playerHand.handSize);
   }
   if(compHand.getHandSize() != 9){
     compHand.addCardToHand(compDeck.peek());
     compDeck.pop();
+    //println("Drawing to comp hand, hand size: " + compHand.handSize);
   }
   if(compHand.getHandSize() == 9 && playerHand.getHandSize() == 9){
+    //println("Both players have full hands");
     initialHandsDrawn = true;
     prepPhase = true;
-  }
-  if(playerHand.handSize == 9 && compHand.handSize == 9){
-    for(int i = 0; i < maxHandSize; i++){
-      playerHand.cards[i].inPrepZone = false;
-      playerHand.cards[i].inBattleZone = false;
-      playerHand.cards[i].inSpellZone = false;
-      playerHand.cards[i].prepSlotTaken = -1;
-      
-      compHand.cards[i].inPrepZone = false;
-      compHand.cards[i].inBattleZone = false;
-      compHand.cards[i].inSpellZone = false;
-      compHand.cards[i].prepSlotTaken = -1;
-      compHand.cards[i].show = false;
-      if(playerHand.monsterCount == 0 || compHand.monsterCount == 0){
-        gameOver = true;
-      }
-      
+    if(playerHand.monsterCount == 0 || compHand.monsterCount == 0){
+      gameOver = true;
     }
+  }
+  
+  if(playerHand.handSize == 9 && compHand.handSize == 9){
+    
     println("Player monster count: " + playerHand.monsterCount);
     println("Comp monster count: " + compHand.monsterCount);
     println("Player cards in deck: " + (playerDeck.top+1));
     println("Comp cards in deck: " + (compDeck.top+1));
   }
+}
+
+void menu(){
+  fill(255);
+  textSize(90);
+  textAlign(CENTER, CENTER);
+  pushMatrix();
+  translate(width/2, 200+menuOffSetY);
+  scale(0.75);
+  image(logo, 0, 0);
+  popMatrix();
+  for(int i = 0; i < numMenuButtons; i++){
+    menuButtons[i].drawButton();
+  }
+}
+
+void rules(){
+  int currentX = width/20;
+  if(width > 2000){
+    currentX += (width/10);
+  }
+  int currentY = height/20;
+  int yIncrement = 40;
+  int xIncrement = 40;
+  fill(255);
+  textSize(50);
+  text("RULES", width/2, currentY);
+  currentY += yIncrement;
+  textSize(30);
+  textAlign(LEFT, TOP);
+  fill(rulesHighlight);
+  text("Who am I playing against?", currentX, currentY);
+  fill(255);
+  currentX+=300;
+  text("A computer that makes purely random decisions.", currentX, currentY);
+  currentY += yIncrement;
+  currentX-=300;
+  fill(rulesHighlight);
+  text("Card Types:", currentX, currentY);
+  currentY += yIncrement;
+  currentX += xIncrement;
+  fill(rulesHighlight);
+  text("Terrain:" , currentX, currentY);
+  fill(255);
+  currentX += 95;
+  text("Used to battle, each terrain card has a type and power level indicated on the card.", currentX, currentY);
+  currentX -= 95;
+  //rectMode(CORNER);
+  //rect(currentX, currentY, 297, 10);
+  currentY += yIncrement;
+  fill(rulesHighlight);
+  text("Spell: ", currentX, currentY);
+  fill(255);
+  currentX += 70;
+  text("Used to enhance terrain cards.", currentX, currentY);
+  currentX-=70;
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  fill(rulesHighlight);
+  text("Type Matchups:", currentX, currentY);
+  fill(255);
+  currentY += yIncrement;
+  currentX += xIncrement;
+  text("Some types of terrain cards are better against others. Hold TAB at any time to show the typing cheat-sheet.", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  fill(rulesHighlight);
+  text("Prep Phase:", currentX, currentY);
+  fill(255);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("Prepare at most 3 terrain cards to potentially do battle, and, after finalizing your choice, your opponents' prepped cards are revealed.", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  fill(rulesHighlight);
+  text("Battle Phase:", currentX, currentY);
+  fill(255);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("Pick one card that will face off against your opponent's choice. After finalizing your choice your opponent's choice is revealed", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  fill(rulesHighlight);
+  text("Spell Phase:", currentX, currentY);
+  fill(255);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("Pick a spell to enhance your terrain cards. Some spells can only be played when you have a certain type of terrain card battling. For example, the", currentX, currentY);
+  currentY += yIncrement;
+  text("spell Overload can only be played while you have a Voltage type terrain in battle.", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  fill(rulesHighlight);
+  text("Spell Multipliers:", currentX, currentY);
+  fill(255);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("Spells apply a multiplier to the power of your terrain card: Power-Up applies a 2x, Power-Down applies a 0.5x to your opponnent, and all spells that are", currentX, currentY);
+  currentY += yIncrement;
+  text("type-specific apply a 3x.", currentX, currentY);
+  currentX -= xIncrement;
+  currentY += yIncrement;
+  fill(rulesHighlight);
+  text("When does the game end?", currentX, currentY);
+  fill(255);
+  currentX += xIncrement;
+  currentY += yIncrement;
+  text("The game ends when one player earns " + pointsNeededToWin + " points, either player has 0 cards in their deck, or either player has no terrain cards in hand.", currentX, currentY);
+  textAlign(CENTER, CENTER);
+  returnToMenuFromRules.drawButton();
 }
 
 void prepPhase(){
@@ -820,8 +849,8 @@ void prepPhase(){
     }
   }
   if(!discardCardsMoved){
-    playerDiscard.printStack();
-    compDiscard.printStack();
+    //playerDiscard.printStack();
+    //compDiscard.printStack();
     playerDiscard.setPosOfAll(playerDiscardPos);
     compDiscard.setPosOfAll(compDiscardPos);
     discardCardsMoved = true;
@@ -983,7 +1012,7 @@ void fightPhase(){
       battleLost.play();
       compWonBattle = true;
     }
-    if(compScore == 10 || playerScore == 10){
+    if(compScore == pointsNeededToWin || playerScore == pointsNeededToWin){
       gameOver = true;
     }
     
@@ -1178,7 +1207,7 @@ void displayMultiplier(PImage img, PVector pos){
 boolean checkValidSpell(Card mon, Card spe){
   boolean ret = true;
   switch(spe.name){
-    case "Conflagerate":
+    case "Incinerate":
       if(mon.type == Type.VOLC){
         ret = true;
       }
@@ -1321,21 +1350,41 @@ void resetControllers(){
       compHand.cards[i].setPos(compHandPos[i].x, compHandPos[i].y);
     }
   }
+  for(int i = 0; i < maxHandSize; i++){
+      playerHand.cards[i].inPrepZone = false;
+      playerHand.cards[i].inBattleZone = false;
+      playerHand.cards[i].inSpellZone = false;
+      playerHand.cards[i].prepSlotTaken = -1;
+      
+      compHand.cards[i].inPrepZone = false;
+      compHand.cards[i].inBattleZone = false;
+      compHand.cards[i].inSpellZone = false;
+      compHand.cards[i].prepSlotTaken = -1;
+      compHand.cards[i].show = false;
+    }
+    for(int i = 0; i < compDiscard.top+1; i++){
+      compDiscard.cards[i].show = true;
+    }
 }
 
 void resetGame(){
   resetControllers();
+  playerDeck = null;
+  compDeck = null;
   initializeDecks();
   gameOver = false;
   playerScore = 0;
   compScore = 0;
   menu = true;
+  firstHandsDrawn = false;
   playerDiscard = new DeckStack();
   compDiscard = new DeckStack();
-  while(playerHand.handSize > -1 && compHand.handSize > -1){
+  while(playerHand.handSize != -1 && compHand.handSize != -1){
     playerHand.removeCardFromHand(playerHand.handSize);
     compHand.removeCardFromHand(compHand.handSize);
   }
-  playerDeck.shuffleDeck();
-  compDeck.shuffleDeck();
+  playerHand = new Hand(true);
+  compHand = new Hand(false);
+  //playerDeck.shuffleDeck();
+  //compDeck.shuffleDeck();
 }

@@ -70,8 +70,15 @@ class Hand{
   }
   
   void drawHand(){
-    for(int i = 0; i <= handSize; i++){
-      cards[i].drawCard();
+    if(!firstHandsDrawn){
+      for(int i = 0; i <= handSize; i++){
+        cards[i].drawCard();
+      }
+    }
+    if(firstHandsDrawn){
+      for(int i = 0; i < maxHandSize; i++){
+        cards[i].drawCard();
+      }
     }
   }
   
